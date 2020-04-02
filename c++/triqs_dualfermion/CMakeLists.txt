@@ -4,6 +4,12 @@ add_library(dualfermion_c STATIC ${sources})
 # Link against triqs and enable warnings
 target_link_libraries(dualfermion_c PUBLIC triqs PRIVATE project_warnings)
 
+find_package (Boost 1.54.0 COMPONENTS mpi serialization REQUIRED)
+message(STATUS "Boost includes: ${Boost_INCLUDE_DIRS}" )
+message(STATUS "Boost libs: ${Boost_LIBRARIES}" )
+target_include_directories(dualfermion_c PUBLIC ${Boost_INCLUDE_DIRS})
+target_link_libraries(dualfermion_c PUBLIC ${Boost_LIBRARIES})
+
 # Configure compilation
 target_compile_options(dualfermion_c PUBLIC -fPIC)
 target_include_directories(dualfermion_c PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/c++>)
