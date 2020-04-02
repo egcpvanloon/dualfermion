@@ -1,10 +1,10 @@
-configure_file(app4triqs-config.cmake.in app4triqs-config.cmake @ONLY)
-configure_file(app4triqs-config-version.cmake.in app4triqs-config-version.cmake @ONLY)
+configure_file(dualfermion-config.cmake.in dualfermion-config.cmake @ONLY)
+configure_file(dualfermion-config-version.cmake.in dualfermion-config-version.cmake @ONLY)
 install(
   FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/app4triqs-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/app4triqs-config-version.cmake
-  DESTINATION lib/cmake/app4triqs
+    ${CMAKE_CURRENT_BINARY_DIR}/dualfermion-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/dualfermion-config-version.cmake
+  DESTINATION lib/cmake/dualfermion
 )
 
-install(EXPORT app4triqs-targets NAMESPACE app4triqs:: DESTINATION lib/cmake/app4triqs)
+install(EXPORT dualfermion-targets NAMESPACE dualfermion:: DESTINATION lib/cmake/dualfermion)

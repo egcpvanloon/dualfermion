@@ -6,8 +6,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in ${CMAKE_CURRENT_BINARY_DIR
 # -----------------------------------------------------------------------------
 add_custom_target(docs_cpp2rst)
 include(${PROJECT_SOURCE_DIR}/share/cmake/extract_flags.cmake)
-extract_flags(app4triqs_c)
-separate_arguments(app4triqs_c_CXXFLAGS)
+extract_flags(dualfermion_c)
+separate_arguments(dualfermion_c_CXXFLAGS)
 macro(generate_docs header_file)
   add_custom_command(
     TARGET docs_cpp2rst
@@ -15,14 +15,14 @@ macro(generate_docs header_file)
     COMMAND
       c++2rst
       ${header_file}
-      -N app4triqs
+      -N dualfermion
       --output_directory ${CMAKE_CURRENT_SOURCE_DIR}/cpp2rst_generated
       -I${PROJECT_SOURCE_DIR}/c++
-      --cxxflags="${app4triqs_c_CXXFLAGS}"
+      --cxxflags="${dualfermion_c_CXXFLAGS}"
   )
 endmacro(generate_docs)
 
-generate_docs(${PROJECT_SOURCE_DIR}/c++/app4triqs/solver_core.hpp)
+generate_docs(${PROJECT_SOURCE_DIR}/c++/dualfermion/solver_core.hpp)
 
 # --------------------------------------------------------
 # Build & Run the C++ doc examples and capture the output
@@ -68,7 +68,7 @@ endif()
 # ---------------------------------
 # Install
 # ---------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ COMPONENT documentation DESTINATION share/doc/app4triqs
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ COMPONENT documentation DESTINATION share/doc/dualfermion
   FILES_MATCHING
   REGEX "\\.(html|pdf|png|gif|jpg|svg|js|xsl|css|py|txt|inv|bib)$"
   PATTERN "_*"

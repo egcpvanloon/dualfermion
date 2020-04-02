@@ -1,8 +1,8 @@
 .. _about:
 
-About app4triqs
+About dualfermion
 ===============
 
-An example application using ``cpp2py`` and TRIQS.
+A second order dual fermion application using ``cpp2py`` and TRIQS.
 
-Written and maintained by N. Wentzell with contributions from H. U.R. Strand.
+Written and maintained by E. van Loon.

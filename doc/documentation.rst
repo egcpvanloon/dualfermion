@@ -16,6 +16,7 @@ Table of Contents
    :maxdepth: 5
 
    index
+   basic
    install
    issues
    changelog
@@ -32,10 +33,10 @@ C++ reference manual
 Python reference manual
 -----------------------
 
-.. automodule:: app4triqs 
+.. automodule:: dualfermion 
    :members:
 
-.. autoclass:: app4triqs.app4triqs_module.Toto
+.. autoclass:: dualfermion.dualfermion_module.Toto
    :members:
 
-.. autofunction:: app4triqs.app4triqs_module.chain
+.. autofunction:: dualfermion.dualfermion_module.chain

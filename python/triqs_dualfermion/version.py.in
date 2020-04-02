@@ -2,9 +2,7 @@
 #
 # TRIQS: a Toolbox for Research in Interacting Quantum Systems
 #
-# Copyright (C) 2016-2018, N. Wentzell
-# Copyright (C) 2018-2019, Simons Foundation
-#   author: N. Wentzell
+# Copyright (C) 2014 by P. Seth, I. Krivenko, M. Ferrero, O. Parcollet
 #
 # TRIQS is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
@@ -21,12 +19,12 @@
 #
 ################################################################################
 
-version = "@PROJECT_VERSION@"
+version = "@DUALFERMION_VERSION@"
 triqs_hash = "@TRIQS_GIT_HASH@"
-app4triqs_hash = "@PROJECT_GIT_HASH@"
+dualfermion_hash = "@DUALFERMION_GIT_HASH@"
 
 def show_version():
-  print "\nYou are using app4triqs version %s\n"%version
+  print "\nYou are using the second-order dual fermion version %s, release %s\n"%(version, release)
 
 def show_git_hash():
-  print "\nYou are using app4triqs git hash %s based on triqs git hash %s\n"%(app4triqs_hash, triqs_hash)
+  print "\nYou are using the second-order dual fermion solver git hash %s based on triqs git hash %s\n"%(dualfermion_hash, triqs_hash)

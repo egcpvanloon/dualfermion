@@ -5,7 +5,7 @@ foreach(file ${all_h5_ref_files})
 endforeach()
 
 # List of all tests
-set(all_tests Hubbard)
+set(all_tests clustertest1 clustertest2 figs)
 
 foreach(test ${all_tests})
   get_filename_component(test_name ${test} NAME_WE)
