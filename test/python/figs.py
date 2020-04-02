@@ -24,7 +24,7 @@
 from pytriqs.archive import HDFArchive
 from pytriqs.gf import *
 
-import triqs_df2.plothelper as plothelper
+import dualfermion.plothelper as plothelper
 
 import numpy as np
 

@@ -22,7 +22,7 @@
 ################################################################################
 
 
-import triqs_df2
+import dualfermion
 
 import pytriqs.gf as gf
 
@@ -74,7 +74,7 @@ gf_struct = op.set_operator_structure(spin_names,orb_names,off_diag=off_diag)
 t_intra_atomic = parms["t0"] * np.array([[0,1],[1,0]])
 
 # Construct the DF2 program
-X = triqs_df2.Dpt(beta=parms['beta'],gf_struct=gf_struct,n_iw=parms['n_iw'],n_iw2=parms["measure_G2_n_fermionic"],n_iW =parms["measure_G2_n_bosonic"],N_x=parms['N_x'],N_y=parms['N_y'],N_z=parms['N_z'])
+X = dualfermion.Dpt(beta=parms['beta'],gf_struct=gf_struct,n_iw=parms['n_iw'],n_iw2=parms["measure_G2_n_fermionic"],n_iW =parms["measure_G2_n_bosonic"],N_x=parms['N_x'],N_y=parms['N_y'],N_z=parms['N_z'])
 
 def Hk_f(k):
     return -2 *parms['t1'] * (np.cos(k[0]))*np.eye(2)
