@@ -20,6 +20,11 @@
 # dualfermion. If not, see <http://www.gnu.org/licenses/>.
 #
 ################################################################################
+"""
+This tests the plothelper module.
+No assertions are done, the test just checks if everything runs
+"""
+
 
 from pytriqs.archive import HDFArchive
 from pytriqs.gf import *

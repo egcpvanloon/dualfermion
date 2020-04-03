@@ -21,6 +21,15 @@
 #
 ################################################################################
 
+"""
+Test in the atomic limit
+A system consisting of two dimers (4 sites) is solved in two ways
+1) ED using Pomerol on the 4-site cluster
+2) ED using Pomerol on the 2-site dimer + dual fermion perturbation theory
+In the limit of small interdimer hopping t1 (compared to U), 
+method (2) should agree well with (1), since DF is exact to second-order in t1/U
+"""
+
 
 import dualfermion
 

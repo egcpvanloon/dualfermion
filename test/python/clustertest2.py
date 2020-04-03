@@ -21,6 +21,12 @@
 #
 ################################################################################
 
+"""
+Test in the atomic limit similar to clustertest1, 
+except now the interaction on the two atoms in the dimer differs.
+This tests if orbital labels are handled correctly.
+"""
+
 import dualfermion
 
 import pytriqs.gf as gf
