@@ -225,10 +225,11 @@ namespace triqs_dualfermion {
     // i,j,k,l are the band indices
     // iw,n1,n2 are the frequency indices
     // There are two spin configurations possible, these are handled separately here. TODO: rewrite order of loops to make this more efficient
+    auto orbital_indices = vertex(0,0).target_indices();
     for (const auto &[iw, n1, n2] : vertex(0,0).mesh()){
       for (const auto R : rmesh){  
-        for (const auto [Ai, Aj, Ak, Al] : vertex(0,0).target_indices()){
-          for (const auto [Bi, Bj, Bk, Bl] : vertex(0,0).target_indices()){                                
+        for (const auto [Ai, Aj, Ak, Al] : orbital_indices){
+          for (const auto [Bi, Bj, Bk, Bl] : orbital_indices){                                
             s2=0;
             for (auto const &bl : gf_struct) {
               // First spin configuration s1=-s2 
