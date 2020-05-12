@@ -168,7 +168,7 @@ if mpi.is_master_node():
 
     # Run the dual perturbation theory
     X.gimp << G_iw # Load G from impurity solver
-    parms['sigmad_subset'] = gf_struct
+    parms['sigmad_subset'] = [gf_struct[0],]
     dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
     X.run(**dpt_parms)
 
