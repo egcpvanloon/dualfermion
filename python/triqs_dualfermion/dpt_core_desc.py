@@ -74,7 +74,6 @@ c.add_property(name = "Hk",
                getter = cfunction("block_gf_view<triqs::gfs::brillouin_zone> Hk ()"),
                doc = """:math:`H(k)` on the Brillouin Zone""")
 
-
 c.add_property(name = "status",
                getter = cfunction("int status ()"),
                doc = """Status of the ``run()`` on exit.""")
@@ -99,18 +98,14 @@ c.add_member(c_name = "calculate_sigma2",
              c_type = "bool",
              initializer = """ true """,
              doc = """Will the second-order dual self-energy be calculated?""")
+c.add_member(c_name = "sigmad_subset",
+             c_type = "triqs::hilbert_space::gf_struct_t",
+             initializer = """ """,
+             doc = """Subset of indices to use for the evaluation of sigmad""")
 c.add_member(c_name = "verbosity",
              c_type = "int",
              initializer = """ ((boost::mpi::communicator().rank()==0)?3:0) """,
              doc = """Verbosity level\n     default: 3 on MPI rank 0, 0 otherwise.""")
-c.add_member(c_name = "t1",
-             c_type = "double",
-             initializer = """ 1. """,
-             doc = """Nearest-neighbor hopping.""")
-c.add_member(c_name = "ksi_delta",
-             c_type = "double",
-             initializer = """ 1. """,
-             doc = """Mixing for the hybridization function. 1 means fully take the new hybridization.""")
 c.add_member(c_name = "delta_initial",
              c_type = "bool",
              initializer = """ false """,

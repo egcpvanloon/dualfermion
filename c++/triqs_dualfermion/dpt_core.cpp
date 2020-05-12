@@ -44,7 +44,7 @@ using triqs::arrays::array;
 namespace triqs_dualfermion {
 
   dpt_core::dpt_core(constr_parameters_t const &p)
-     : constr_parameters(p), beta(p.beta), gf_struct(p.gf_struct), n_iw(p.n_iw),n_iW(p.n_iW),n_iw2(p.n_iw2),N_x(p.N_x),N_y(p.N_y),N_z(p.N_z) {
+     : constr_parameters(p), beta(p.beta), gf_struct(p.gf_struct),n_iw(p.n_iw),n_iW(p.n_iW),n_iw2(p.n_iw2),N_x(p.N_x),N_y(p.N_y),N_z(p.N_z) {
          
     // Allocate single particle greens functions
     _gimp   = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
@@ -76,6 +76,7 @@ namespace triqs_dualfermion {
 
     //run_parameters = run_parameters_;
     run_parameters_t params(run_parameters_);
+    gf_struct_t sigmad_subset(params.sigmad_subset);
 
     if (params.verbosity >= 2)
       std::cout << "\n"
@@ -194,13 +195,13 @@ namespace triqs_dualfermion {
     if(params.calculate_sigma1){
     if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: Calculate first order diagram" << std::endl;
     // First-order diagram    
-    // Outer loop over s2, the spin of Sigma_dual
+    // Outer loop over s2, the spin of Sigma_dual. This takes values in sigmad_subset =< gf_struct
     // Inner loop over s1, the spin of the internal Green's function
     // R0 is (0,0,0) in real space
     // i,j,k,l are the band indices
     // iw,n1,n2 are the frequency indices
     s2=0;
-    for (auto const &bl : gf_struct) {
+    for (auto const &bl : sigmad_subset) {
       s1=0;  
       for (auto const &bl2 : gf_struct) {
         for (const auto &[iw, n1, n2] : vertex(s1,s2).mesh()){
@@ -219,7 +220,7 @@ namespace triqs_dualfermion {
     if(params.calculate_sigma2){
     if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: Second-order diagram" << std::endl;
     // Second-order diagram
-    // Outer loop over s2, the spin of Sigma_dual
+    // Outer loop over s2, the spin of Sigma_dual. This takes values in sigmad_subset =< gf_struct
     // Inner loop over s1, the spin of two of the internal Green's functions
     // R is the spatial argument of Sigma in real space, two Green's functions have R and 1 has -R
     // i,j,k,l are the band indices
@@ -231,9 +232,10 @@ namespace triqs_dualfermion {
         for (const auto [Ai, Aj, Ak, Al] : orbital_indices){
           for (const auto [Bi, Bj, Bk, Bl] : orbital_indices){                                
             s2=0;
-            //TODO: Pull s2 to the outer level and introduce an option to let the loop go over a subset 
+            //TODO: Pull s2 to the outer level?
+            //      Introducing an option to let the loop go over a subset 
             //      of indices, ''upfolding'' to all indices can then be done later
-            for (auto const &bl : gf_struct) {
+            for (auto const &bl : sigmad_subset) {
               s1=0;  
               for (auto const &bl2 : gf_struct) {
                 // First spin configuration s1 != s2 
@@ -318,7 +320,7 @@ namespace triqs_dualfermion {
        Now in terms of Gdd = 1/gimp * Gd * 1/gimp
      */
     if (params.verbosity >= 2) std::cout << "Evaluate new Delta" << std::endl;
-    _Delta(wn_) << _Delta(wn_) + params.ksi_delta * gdloc(wn_) * _gimp(wn_)/gloc(wn_);
+    _Delta(wn_) << _Delta(wn_) + gdloc(wn_) * _gimp(wn_)/gloc(wn_);
     
     
     if (params.verbosity >= 2) std::cout << "dualfermion finished\n" ;

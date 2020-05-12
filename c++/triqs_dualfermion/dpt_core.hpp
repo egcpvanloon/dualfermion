@@ -98,7 +98,6 @@ namespace triqs_dualfermion {
     /// Set of parameters used in the last call to ``run()``.
     run_parameters_t last_run_parameters() const { return run_parameters; }
 
-
     /// :math:`\Delta(i\omega)` in imaginary frequencies.
     block_gf_view<imfreq> Delta() { return _Delta; }
 

@@ -46,7 +46,7 @@ from pomerol2triqs import PomerolED
 
 import numpy as np
 
-dptkeys = ['ksi_delta','t1','verbosity','calculate_sigma']
+dptkeys = ['verbosity','calculate_sigma']
 
 parms = {
         # Solver parameters

@@ -77,6 +77,7 @@ class Dpt(DptCore):
         """
 
         # Pre-processing
+        params_kw['sigmad_subset'] = params_kw.get('sigmad_subset',self.gf_struct)
 
         # Call the core solver's solve routine
         status = DptCore.run(self, **params_kw)

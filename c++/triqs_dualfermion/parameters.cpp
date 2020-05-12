@@ -89,11 +89,8 @@ namespace triqs_dualfermion {
     triqs::h5::group grp = name.empty() ? h5group : h5group.create_group(name);
 
     h5_write(grp, "verbosity", sp.verbosity);
-    
-    h5_write(grp, "t1", sp.t1);
-    
-    h5_write(grp, "ksi_delta", sp.ksi_delta);
-    
+        
+    h5_write(grp, "sigmad_subset", sp.sigmad_subset);
     h5_write(grp, "calculate_sigma", sp.calculate_sigma);
     h5_write(grp, "calculate_sigma1", sp.calculate_sigma1);
     h5_write(grp, "calculate_sigma2", sp.calculate_sigma2);
@@ -104,11 +101,8 @@ namespace triqs_dualfermion {
     triqs::h5::group grp = name.empty() ? h5group : h5group.open_group(name);
     
     h5_read(grp, "verbosity", sp.verbosity);    
-
-    h5_read(grp, "t1", sp.t1);
-
-    h5_read(grp, "ksi_delta", sp.ksi_delta);
     
+    h5_read(grp, "sigmad_subset", sp.sigmad_subset);
     h5_read(grp, "calculate_sigma", sp.calculate_sigma);
     h5_read(grp, "calculate_sigma1", sp.calculate_sigma1);
     h5_read(grp, "calculate_sigma2", sp.calculate_sigma2);

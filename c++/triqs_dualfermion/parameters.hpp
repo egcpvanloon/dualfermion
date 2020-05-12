@@ -68,9 +68,12 @@ namespace triqs_dualfermion {
     /// default: 3 on MPI rank 0, 0 otherwise.
     int verbosity = ((boost::mpi::communicator().rank() == 0) ? 3 : 0); // silence the slave nodes
     
-    double t1 = 1.;
     
-    double ksi_delta = 1.;
+    gf_struct_t sigmad_subset;
+    
+    //double t1 = 1.;
+    
+    //double ksi_delta = 1.;
     
     bool delta_initial = false;
     
