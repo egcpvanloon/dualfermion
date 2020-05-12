@@ -231,20 +231,22 @@ namespace triqs_dualfermion {
         for (const auto [Ai, Aj, Ak, Al] : orbital_indices){
           for (const auto [Bi, Bj, Bk, Bl] : orbital_indices){                                
             s2=0;
+            //TODO: Pull s2 to the outer level and introduce an option to let the loop go over a subset 
+            //      of indices, ''upfolding'' to all indices can then be done later
             for (auto const &bl : gf_struct) {
-              // First spin configuration s1=-s2 
-              s1= sigma_bar(s2);  
-              sigmad_real[s2][n2,R](Al,Bk) += 
-              -0.5
-              * vertex(s1,s2)(n1-n2,n2+iw, n2)(Ai, Aj, Ak, Al) 
-              * vertex(s1,s2)(n2-n1, n1+iw, n1)(Bi, Bj, Bk, Bl) 
-              * gd_real[s1](n2+iw,R)(Ai,Bj)
-              * gd_real[s1](n1+iw,-R)(Bi,Aj)
-              * gd_real[s2](n1,R)(Ak,Bl)
-              /(beta*beta) ;                
-              // Second spin configuration: sum over s1  
               s1=0;  
               for (auto const &bl2 : gf_struct) {
+                // First spin configuration s1 != s2 
+                sigmad_real[s2][n2,R](Al,Bk) += 
+                -0.5
+                *(1-kronecker(s1,s2))
+                * vertex(s1,s2)(n1-n2,n2+iw, n2)(Ai, Aj, Ak, Al) 
+                * vertex(s1,s2)(n2-n1, n1+iw, n1)(Bi, Bj, Bk, Bl) 
+                * gd_real[s1](n2+iw,R)(Ai,Bj)
+                * gd_real[s1](n1+iw,-R)(Bi,Aj)
+                * gd_real[s2](n1,R)(Ak,Bl)
+                /(beta*beta) ;                
+                // Second spin configuration: all s1  
                 sigmad_real[s2][n2,R](Al,Bk) += 
                 -0.5
                 * vertex(s1,s2)(iw, n1, n2)(Ai, Aj, Ak, Al) 
@@ -262,6 +264,9 @@ namespace triqs_dualfermion {
       }
     }
     }//sigma2
+    
+    //TODO:
+    // Perform the ''upfolding'' here? Or in python
     
     if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: FT" << std::endl;
     sigmad = make_gf_from_fourier<1>(sigmad_real);

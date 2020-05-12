@@ -42,8 +42,9 @@ int kronecker (T a) {
     return 0;
 }
 
+// Does not work with more than two blocks
 // 1 --> 0
 // 0 --> 1
-int sigma_bar(int sigma) {
-    return 1 - sigma ;
-}
+// int sigma_bar(int sigma) {
+//    return 1 - sigma ;
+//}
