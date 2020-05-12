@@ -293,7 +293,19 @@ namespace triqs_dualfermion {
     }
     // Write the lattice Green's function
     if (params.verbosity >= 1 && params.calculate_sigma) h5_write(h5::file("G_k.h5",'w'),"G_k",glat);
-
+    
+    // Also calculate sigma_lat here from Dyson's equation, since that is what we are frequently interested in
+    // TODO: Some of the tests could be written purely in terms of sigma?
+    // TODO: Ideally, rationalize the verbosity parameter into output_XXX
+    if (params.verbosity >= 1 && (boost::mpi::communicator().rank() == 0)){
+        auto sigma_k = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
+        for (auto const &b : range(sigma_k.size())) {
+            for (const auto &[iw,k] : sigma_k[b].mesh()){
+                sigma_k[b][iw,k] = iw - _Hk[b](k)  -1./glat[b][iw,k];
+            }
+        }
+        h5_write(h5::file("sigma_k.h5",'w'),"sigma_k",sigma_k);
+    }// output_sigmak
 
     
     /* Calculate local part of Gd and Gloc */
