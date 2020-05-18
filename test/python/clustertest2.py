@@ -176,13 +176,13 @@ if parms["measure_G2_iw_ph"]:
 gimp = G_iw[spin]
 
 
+# Run the dual perturbation theory
+X.gimp << G_iw # Load G from impurity solver
+dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
+X.run(**dpt_parms)
+
+
 if mpi.is_master_node():        
-    # Run the dual perturbation theory
-    X.gimp << G_iw # Load G from impurity solver
-    dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
-    X.run(**dpt_parms)
-
-
     G_k = HDFArchive("G_k.h5",'r')['G_k'][spin]
 
 

@@ -164,15 +164,14 @@ if parms["measure_G2_iw_ph"]:
 # Some intermediate saves
 gimp = G_iw['up']    
 
+
+# Run the dual perturbation theory
+X.gimp << G_iw # Load G from impurity solver
+parms['sigmad_subset'] = [gf_struct[0],]
+dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
+X.run(**dpt_parms)
+
 if mpi.is_master_node():
-
-    # Run the dual perturbation theory
-    X.gimp << G_iw # Load G from impurity solver
-    parms['sigmad_subset'] = [gf_struct[0],]
-    dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
-    X.run(**dpt_parms)
-
-
     G_k = HDFArchive("G_k.h5",'r')['G_k']['up']
 
 

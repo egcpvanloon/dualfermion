@@ -40,6 +40,7 @@ using triqs::clef::placeholder;
 #include <triqs/arrays.hpp>
 using triqs::arrays::array;
 
+mpi::communicator world;
 
 namespace triqs_dualfermion {
 
@@ -78,19 +79,35 @@ namespace triqs_dualfermion {
     run_parameters_t params(run_parameters_);
     gf_struct_t sigmad_subset(params.sigmad_subset);
 
-    if (params.verbosity >= 2)
+    /* Set-up boolean variables that determine which output is written
+     * TODO: make these individual flags that are accessible in python
+     * still check for calculate_sigma and world.rank though. The latter avoid simultaneous writing to files
+     */                   
+    bool output_stdout = params.verbosity >= 2 && (world.rank() == 0);
+    
+    bool output_sigmak = params.verbosity >= 1 && params.calculate_sigma && (world.rank() == 0);
+    bool output_gk = params.verbosity >= 1  && params.calculate_sigma && (world.rank() == 0);
+    bool output_gdk = params.verbosity >= 3 && params.calculate_sigma && (world.rank() == 0);
+    bool output_gdr = params.verbosity >= 3 && params.calculate_sigma && (world.rank() == 0);
+    bool output_sigmadk = params.verbosity >= 3 && params.calculate_sigma && (world.rank() == 0);
+    bool output_sigmadr = params.verbosity >= 3 && params.calculate_sigma && (world.rank() == 0);
+    bool output_vertex = params.verbosity >= 5 && params.calculate_sigma && (world.rank() == 0);
+    
+    
+    if (output_stdout)
       std::cout << "\n"
                    " ------------------------------\n"
                    " - second-order dual fermion  -\n"
                    " ------------------------------\n\n";
     
+                   
     auto kmesh = _Hk[0].mesh(); // Note that Hk also has a spin index, Hk[0] takes Hk for a single spin. 
     
     // Placeholders
     placeholder<0> wn_; // Frequency -- Fermionic
-    placeholder<1> wn1_; // Frequency -- Fermionic 
-    placeholder<2> wn2_; // Frequency -- Fermionic
-    placeholder<3> Wn_; // Frequency -- Bosonic
+    //placeholder<1> wn1_; // Frequency -- Fermionic 
+    //placeholder<2> wn2_; // Frequency -- Fermionic
+    //placeholder<3> Wn_; // Frequency -- Bosonic
     
     
     // Create initial guess for Delta
@@ -112,7 +129,7 @@ namespace triqs_dualfermion {
         gloc() /= double(kmesh.size());
         _Delta(wn_) << _Delta(wn_)-1/gloc(wn_)  ;
         
-        if (params.verbosity >= 2) std::cout<< "Initial Delta has been assigned" << std::endl;
+        if (output_stdout) std::cout<< "Initial Delta has been assigned" << std::endl;
         return;
     }
     
@@ -121,14 +138,14 @@ namespace triqs_dualfermion {
     // Create the container for the bare dual Green's function
     auto gd0 = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
     
-    if (params.verbosity >= 2) std::cout << "Initializing gd0" <<std::endl;    
+    if (output_stdout) std::cout << "Initializing gd0" <<std::endl;    
     // Load the values of the bare dual Green's function                   
     for (auto const &b : range(gd0.size())) {
       for (const auto &[iw,k] : gd0[b].mesh()){          
           gd0[b][iw,k] = 1./ ( _gimp[b][iw] + _gimp[b][iw]*(_Delta[b][iw] - _Hk[b](k)   )*_gimp[b][iw]) - 1./_gimp[b][iw] ;          
       }
     }
-    if (params.verbosity >= 1) h5_write(h5::file("gd_k.h5",'w'),"gd_k",gd0);
+    if (output_gdk) h5_write(h5::file("gd_k.h5",'w'),"gd_k",gd0);
     
     
     /* Initialize empty Sigma_dual in momentum space */
@@ -136,10 +153,10 @@ namespace triqs_dualfermion {
 
     
     if(params.calculate_sigma){
-    int s1 =0;    
-    int s2 =0;
+    //int s1 =0;    
+    //int s2 =0;
 
-    if (params.verbosity >= 2) std::cout << "Calculating Sigma dual" << std::endl;
+    if (output_stdout) std::cout << "Calculating Sigma dual" << std::endl;
     
     /* FT gd0 to real space  */
     //gf_mesh<cyclic_lattice> rmesh( lat, periodization_matrix);
@@ -154,31 +171,31 @@ namespace triqs_dualfermion {
     auto sigmad_real = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
     sigmad_real() = 0;
             
-    if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: assign vertex" << std::endl;
+    if (output_stdout) std::cout << "Calculating Sigma dual: assign vertex" << std::endl;
 
     // Calculate the self-energy
     // Note, need to determine the vertex from G2 and gimp    
     
     
     // TODO:
-    // Loops over products are quite slow (at present), see:
+    // Loops over products could be quite slow (at present), see:
     // https://github.com/TRIQS/triqs/issues/658
     // Code can be made more performant by replacing the loops by individual loops, ugly
     // Hopefully, in the future this goes away
-    // Possibly, CLEF notation becomes sufficiently performant
+    // In that case, consider rewriting in CLEF notation becomes sufficiently performant
     
     // Calculate vertex first, since it will be used several times. 
     // Be careful about the vertex band labels here so that they can be used safely later on.    
     // Slightly tricky: different Matsubara grids for _gimp and _G2_iw, have to use _gimp[0](n1) instead of _gimp[0][n1]
     
-    //TODO: Timing/memory: is it necessary to precalculate the vertex?
+    //TODO: Timing/memory: is it necessary to precalculate the vertex? 
+    //      Would it be better to expose this as a separate method in python?
     vertex() = 0.;
     for (auto const &s2 : range(_gimp.size())) {
       for (auto const &s1 : range(_gimp.size())) {
         for (const auto &[iw, n1, n2] : _G2_iw(s1,s2).mesh()){
           for (const auto [Ai, Aj, Ak, Al] : _G2_iw(s1,s2).target_indices()){
 
-            //TODO: ensure that all matrix labels are correct                
             vertex(s1,s2)[iw, n1, n2](Ai, Aj, Ak, Al) 
             = 
             _G2_iw(s1,s2)[iw, n1, n2](Ai, Aj, Ak, Al)
@@ -190,21 +207,21 @@ namespace triqs_dualfermion {
         }
       }
     }   
-    if (params.verbosity >= 5) h5_write(h5::file("vertex.h5",'w'),"vertex",vertex);
+    if (output_vertex) h5_write(h5::file("vertex.h5",'w'),"vertex",vertex);
     
     if(params.calculate_sigma1){
-    if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: Calculate first order diagram" << std::endl;
+    if (output_stdout) std::cout << "Calculating Sigma dual: Calculate first order diagram" << std::endl;
     // First-order diagram    
     // Outer loop over s2, the spin of Sigma_dual. This takes values in sigmad_subset =< gf_struct
     // Inner loop over s1, the spin of the internal Green's function
     // R0 is (0,0,0) in real space
     // i,j,k,l are the band indices
     // iw,n1,n2 are the frequency indices
-    s2=0;
+    int s2=0;
     for (auto const &bl : sigmad_subset) {
-      s1=0;  
+      int s1=0;  
       for (auto const &bl2 : gf_struct) {
-        for (const auto &[iw, n1, n2] : vertex(s1,s2).mesh()){
+        for (const auto &[iw, n1, n2] : mpi::chunk(vertex(s1,s2).mesh())){
           if(not kronecker(iw)) continue; // Only w=0 contributes to the second-order diagram 
           for (const auto [i, j, k, l] : vertex(s1,s2).target_indices()){
             sigmad_real[s2][n2,R0](l,k) += -vertex(s1,s2)[iw, n1, n2](i, j, k, l) * gd_real[s1](n1,R0)(i,j)/beta ; 
@@ -218,7 +235,7 @@ namespace triqs_dualfermion {
     }//sigma1
     
     if(params.calculate_sigma2){
-    if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: Second-order diagram" << std::endl;
+    if (output_stdout) std::cout << "Calculating Sigma dual: Second-order diagram" << std::endl;
     // Second-order diagram
     // Outer loop over s2, the spin of Sigma_dual. This takes values in sigmad_subset =< gf_struct
     // Inner loop over s1, the spin of two of the internal Green's functions
@@ -226,17 +243,19 @@ namespace triqs_dualfermion {
     // i,j,k,l are the band indices
     // iw,n1,n2 are the frequency indices
     // There are two spin configurations possible, these are handled separately here. TODO: rewrite order of loops to make this more efficient
+    // TODO: Do we need to check explicitly if all frequencies are in range?
     auto orbital_indices = vertex(0,0).target_indices();
-    for (const auto &[iw, n1, n2] : vertex(0,0).mesh()){
+    for (const auto &[iw, n1, n2] : mpi::chunk(vertex(0,0).mesh(),world)){
       for (const auto R : rmesh){  
         for (const auto [Ai, Aj, Ak, Al] : orbital_indices){
           for (const auto [Bi, Bj, Bk, Bl] : orbital_indices){                                
-            s2=0;
+            int s2=0;
             //TODO: Pull s2 to the outer level?
             //      Introducing an option to let the loop go over a subset 
             //      of indices, ''upfolding'' to all indices can then be done later
+            //      N.b.: Current code assumes that the subset is continuous and starts at 0, since it uses the integer s1,s2 to count blocks. Instead, rewrite to use bl
             for (auto const &bl : sigmad_subset) {
-              s1=0;  
+              int s1=0;  
               for (auto const &bl2 : gf_struct) {
                 // First spin configuration s1 != s2 
                 sigmad_real[s2][n2,R](Al,Bk) += 
@@ -265,16 +284,17 @@ namespace triqs_dualfermion {
         }
       }
     }
-    }//sigma2
+    }//sigma2    
+    sigmad_real() =  mpi::all_reduce(sigmad_real, world);
     
     //TODO:
     // Perform the ''upfolding'' here? Or in python
     
-    if (params.verbosity >= 2) std::cout << "Calculating Sigma dual: FT" << std::endl;
+    if (output_stdout) std::cout << "Calculating Sigma dual: FT" << std::endl;
     sigmad = make_gf_from_fourier<1>(sigmad_real);
-    if (params.verbosity >= 1) h5_write(h5::file("gd_real.h5",'w'),"gd_real",gd_real);
-    if (params.verbosity >= 1) h5_write(h5::file("sigmad_real.h5",'w'),"sigmad_real",sigmad_real);
-    if (params.verbosity >= 1) h5_write(h5::file("sigmad_k.h5",'w'),"sigmad_k",sigmad);
+    if (output_gdr) h5_write(h5::file("gd_real.h5",'w'),"gd_real",gd_real);
+    if (output_sigmadr) h5_write(h5::file("sigmad_real.h5",'w'),"sigmad_real",sigmad_real);
+    if (output_sigmadk) h5_write(h5::file("sigmad_k.h5",'w'),"sigmad_k",sigmad);
     }
     else{
       sigmad() = 0;            
@@ -282,7 +302,7 @@ namespace triqs_dualfermion {
     
     /* Calculate G lattice and Gdlattice */
     
-    if (params.verbosity >= 2) std::cout << "Calculating Glat" << std::endl;
+    if (output_stdout) std::cout << "Calculating Glat" << std::endl;
     // Create the container for the lattice Green's function
     auto glat = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
     for (auto const &b : range(glat.size())) {
@@ -292,12 +312,11 @@ namespace triqs_dualfermion {
         }
     }
     // Write the lattice Green's function
-    if (params.verbosity >= 1 && params.calculate_sigma) h5_write(h5::file("G_k.h5",'w'),"G_k",glat);
+    if (output_gk) h5_write(h5::file("G_k.h5",'w'),"G_k",glat);
     
     // Also calculate sigma_lat here from Dyson's equation, since that is what we are frequently interested in
     // TODO: Some of the tests could be written purely in terms of sigma?
-    // TODO: Ideally, rationalize the verbosity parameter into output_XXX
-    if (params.verbosity >= 1 && (boost::mpi::communicator().rank() == 0)){
+    if (output_sigmak){
         auto sigma_k = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
         for (auto const &b : range(sigma_k.size())) {
             for (const auto &[iw,k] : sigma_k[b].mesh()){
@@ -331,11 +350,11 @@ namespace triqs_dualfermion {
        Delta_new = Delta_old + ksi * gimp^-1 Gd_loc Gloc^-1
        Now in terms of Gdd = 1/gimp * Gd * 1/gimp
      */
-    if (params.verbosity >= 2) std::cout << "Evaluate new Delta" << std::endl;
+    if (output_stdout) std::cout << "Evaluate new Delta" << std::endl;
     _Delta(wn_) << _Delta(wn_) + gdloc(wn_) * _gimp(wn_)/gloc(wn_);
     
     
-    if (params.verbosity >= 2) std::cout << "dualfermion finished\n" ;
+    if (output_stdout) std::cout << "dualfermion finished\n" ;
     
     return ;
     
