@@ -243,9 +243,10 @@ namespace triqs_dualfermion {
     // i,j,k,l are the band indices
     // iw,n1,n2 are the frequency indices
     // There are two spin configurations possible, these are handled separately here. TODO: rewrite order of loops to make this more efficient
-    // TODO: Do we need to check explicitly if all frequencies are in range?
+    // TODO: Check explicitly that all frequencies are in range in a symmetric way
     auto orbital_indices = vertex(0,0).target_indices();
     for (const auto &[iw, n1, n2] : mpi::chunk(vertex(0,0).mesh(),world)){
+      //TESTING: if(not kronecker(iw)) continue; Only zero frequency  
       for (const auto R : rmesh){  
         for (const auto [Ai, Aj, Ak, Al] : orbital_indices){
           for (const auto [Bi, Bj, Bk, Bl] : orbital_indices){                                
@@ -255,17 +256,17 @@ namespace triqs_dualfermion {
             //      of indices, ''upfolding'' to all indices can then be done later
             //      N.b.: Current code assumes that the subset is continuous and starts at 0, since it uses the integer s1,s2 to count blocks. Instead, rewrite to use bl
             for (auto const &bl : sigmad_subset) {
-              int s1=0;  
+              int s1=0;
               for (auto const &bl2 : gf_struct) {
                 // First spin configuration s1 != s2 
                 sigmad_real[s2][n2,R](Al,Bk) += 
                 -0.5
                 *(1-kronecker(s1,s2))
-                * vertex(s1,s2)(n1-n2,n2+iw, n2)(Ai, Aj, Ak, Al) 
-                * vertex(s1,s2)(n2-n1, n1+iw, n1)(Bi, Bj, Bk, Bl) 
-                * gd_real[s1](n2+iw,R)(Ai,Bj)
+                * vertex(s1,s2)(n1-n2,n2+iw, n2)(Ak, Aj, Ai, Al) 
+                * vertex(s1,s2)(n2-n1, n1+iw, n1)(Bi, Bl, Bk, Bj) 
+                * gd_real[s1](n2+iw,R)(Ak,Bl)
                 * gd_real[s1](n1+iw,-R)(Bi,Aj)
-                * gd_real[s2](n1,R)(Ak,Bl)
+                * gd_real[s2](n1,R)(Ai,Bj)
                 /(beta*beta) ;                
                 // Second spin configuration: all s1  
                 sigmad_real[s2][n2,R](Al,Bk) += 
