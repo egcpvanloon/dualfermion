@@ -59,8 +59,8 @@ parms = {
         # DMFT loop control parameters
         'calculate_sigma' : True,
         'measure_G2_iw_ph': True,
-        "measure_G2_n_bosonic": 9,
-        "measure_G2_n_fermionic": 9,
+        "measure_G2_n_bosonic": 5,
+        "measure_G2_n_fermionic": 5,
         "verbosity":2,
         }
 
