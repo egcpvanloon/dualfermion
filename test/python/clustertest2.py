@@ -38,9 +38,15 @@ import pytriqs.archive as ar
 from pytriqs.archive import HDFArchive
 from itertools import product
 
-from pomerol2triqs import PomerolED
+# Set to True to generate the .ref.h5 as well
+haspomerol=False
+if haspomerol:
+    from pomerol2triqs import PomerolED
 
 import numpy as np
+
+
+arname = "clustertest2.ref.h5"
 
 spin = 'dn'
 
@@ -91,90 +97,102 @@ for spin,_ in X.Hk:
     for k in X.Hk.mesh:
         X.Hk[spin][k] = Hk_f(k.value)
 
-g2_blocks = set([("up", "up"), ("up", "dn"), ("dn", "up"),("dn","dn")])
-index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
-                   for sn, o in product(spin_names, orb_names)}
+if haspomerol:
+    g2_blocks = set([("up", "up"), ("up", "dn"), ("dn", "up"),("dn","dn")])
+    index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
+                    for sn, o in product(spin_names, orb_names)}
 
-# Make PomerolED solver object
-ed = PomerolED(index_converter, verbose = True)
-N = sum(ops.n(sn, o) for sn, o in product(spin_names, orb_names))
-H = (
-             parms["Ua"] * (ops.n('up','0') * ops.n('dn','0') )
-            +parms["Ub"] * (ops.n('up','1') * ops.n('dn','1') )
-            +parms['t0']*(
-                  ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
-                 +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
-                 )
-            - parms['chemical_potential']*N
-   )
+    # Make PomerolED solver object
+    ed = PomerolED(index_converter, verbose = True)
+    N = sum(ops.n(sn, o) for sn, o in product(spin_names, orb_names))
+    H = (
+                parms["Ua"] * (ops.n('up','0') * ops.n('dn','0') )
+                +parms["Ub"] * (ops.n('up','1') * ops.n('dn','1') )
+                +parms['t0']*(
+                    ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
+                    +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
+                    )
+                - parms['chemical_potential']*N
+    )
 
-#####
-#
-# Reference: 4 site cluster, calculate only G, not G2
-#
-#####
-def calc_reference():
+    #####
+    #
+    # Reference: 4 site cluster, calculate only G, not G2
+    #
+    #####
+    def calc_reference():
 
-    ref_orbs = ['%s'%i for i in range(n_orbs*parms['N_x'])]
-    ref_gf_struct = op.set_operator_structure(spin_names,ref_orbs,off_diag=off_diag) 
-    ref_index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
-                   for sn, o in product(spin_names, ref_orbs)}
-    print ref_index_converter,ref_orbs    
-    ref_ed = PomerolED(ref_index_converter, verbose = True)
-    ref_N =sum(ops.n(sn, o) for sn, o in product(spin_names, ref_orbs))
-    ref_H = (
-             parms["Ua"] * (ops.n('up','0') * ops.n('dn','0')+ops.n('up','2') * ops.n('dn','2') )
-            +parms["Ub"] * (ops.n('up','1') * ops.n('dn','1')+ops.n('up','3') * ops.n('dn','3') )
-            +parms['t0']*(
-                  ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
-                 +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
-                 +ops.c_dag('up','2')*ops.c('up','3') + ops.c_dag('up','3')*ops.c('up','2')
-                 +ops.c_dag('dn','2')*ops.c('dn','3') + ops.c_dag('dn','3')*ops.c('dn','2')   
-                 )
-            -2.*parms['t1']*(
-                  ops.c_dag('up','0')*ops.c('up','2') + ops.c_dag('up','2')*ops.c('up','0')
-                 +ops.c_dag('dn','0')*ops.c('dn','2') + ops.c_dag('dn','2')*ops.c('dn','0')
-                 +ops.c_dag('up','1')*ops.c('up','3') + ops.c_dag('up','3')*ops.c('up','1')
-                 +ops.c_dag('dn','1')*ops.c('dn','3') + ops.c_dag('dn','3')*ops.c('dn','1') 
-                 )
-            - parms['chemical_potential']*ref_N
-            )
-    # Run the solver
-    ref_ed.diagonalize(ref_H)
-    # Compute G(i\omega)
-    ref_G_iw = ref_ed.G_iw(ref_gf_struct, parms['beta'], parms['n_iw'])
-    return ref_G_iw
+        ref_orbs = ['%s'%i for i in range(n_orbs*parms['N_x'])]
+        ref_gf_struct = op.set_operator_structure(spin_names,ref_orbs,off_diag=off_diag) 
+        ref_index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
+                    for sn, o in product(spin_names, ref_orbs)}
+        print ref_index_converter,ref_orbs    
+        ref_ed = PomerolED(ref_index_converter, verbose = True)
+        ref_N =sum(ops.n(sn, o) for sn, o in product(spin_names, ref_orbs))
+        ref_H = (
+                parms["Ua"] * (ops.n('up','0') * ops.n('dn','0')+ops.n('up','2') * ops.n('dn','2') )
+                +parms["Ub"] * (ops.n('up','1') * ops.n('dn','1')+ops.n('up','3') * ops.n('dn','3') )
+                +parms['t0']*(
+                    ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
+                    +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
+                    +ops.c_dag('up','2')*ops.c('up','3') + ops.c_dag('up','3')*ops.c('up','2')
+                    +ops.c_dag('dn','2')*ops.c('dn','3') + ops.c_dag('dn','3')*ops.c('dn','2')   
+                    )
+                -2.*parms['t1']*(
+                    ops.c_dag('up','0')*ops.c('up','2') + ops.c_dag('up','2')*ops.c('up','0')
+                    +ops.c_dag('dn','0')*ops.c('dn','2') + ops.c_dag('dn','2')*ops.c('dn','0')
+                    +ops.c_dag('up','1')*ops.c('up','3') + ops.c_dag('up','3')*ops.c('up','1')
+                    +ops.c_dag('dn','1')*ops.c('dn','3') + ops.c_dag('dn','3')*ops.c('dn','1') 
+                    )
+                - parms['chemical_potential']*ref_N
+                )
+        # Run the solver
+        ref_ed.diagonalize(ref_H)
+        # Compute G(i\omega)
+        ref_G_iw = ref_ed.G_iw(ref_gf_struct, parms['beta'], parms['n_iw'])
+        return ref_G_iw
+                
+    ref_G_iw = calc_reference()
+    ref=ref_G_iw[spin]
+
+                
+    # Obtain bath sites from Delta and create H_ED
+    H_ED = H
             
-ref_G_iw = calc_reference()
-ref=ref_G_iw[spin]
+    # Run the solver
+    ed.diagonalize(H_ED)
+    # Compute G(i\omega)
+    G_iw = ed.G_iw(gf_struct, parms['beta'], parms['n_iw'])
+
+    if parms["measure_G2_iw_ph"]:
+        common_g2_params = {'gf_struct' : gf_struct,
+                    'beta' : parms['beta'],
+                    'blocks' : g2_blocks,
+                    'n_iw' : parms['measure_G2_n_bosonic']}
+        G2_iw = ed.G2_iw_inu_inup(channel = "PH",
+                                    block_order = "AABB",
+                                    n_inu = parms['measure_G2_n_fermionic'],
+                                    **common_g2_params)
+
+    if mpi.is_master_node():
+        with HDFArchive(arname,'w') as ar:
+            ar['ref'] = ref
+            ar['G_iw'] = G_iw
+            ar['G2_iw'] =G2_iw
+        
+else: # haspomerol is False
+    with HDFArchive(arname,'r') as ar:
+        ref = ar['ref']
+        G_iw = ar['G_iw']
+        G2_iw = ar['G2_iw'] 
+        
+gimp = G_iw[spin]    
+
 
 # Initial hybridization
 X.Delta << 0.
-            
-# Obtain bath sites from Delta and create H_ED
-H_ED = H
-        
-# Run the solver
-ed.diagonalize(H_ED)
-# Compute G(i\omega)
-G_iw = ed.G_iw(gf_struct, parms['beta'], parms['n_iw'])
 
-if parms["measure_G2_iw_ph"]:
-    common_g2_params = {'gf_struct' : gf_struct,
-                'beta' : parms['beta'],
-                'blocks' : g2_blocks,
-                'n_iw' : parms['measure_G2_n_bosonic']}
-    G2_iw = ed.G2_iw_inu_inup(channel = "PH",
-                                block_order = "AABB",
-                                n_inu = parms['measure_G2_n_fermionic'],
-                                **common_g2_params)
-    
-    X.G2_iw << G2_iw
-
-    
-# Some intermediate saves
-gimp = G_iw[spin]
-
+X.G2_iw << G2_iw
 
 # Run the dual perturbation theory
 X.gimp << G_iw # Load G from impurity solver

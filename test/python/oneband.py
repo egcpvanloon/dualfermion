@@ -35,7 +35,10 @@ import pytriqs.archive as ar
 from pytriqs.archive import HDFArchive
 from itertools import product
 
-from pomerol2triqs import PomerolED
+# Set to True to generate the .ref.h5 as well
+haspomerol=False
+if haspomerol:
+    from pomerol2triqs import PomerolED
 
 
 import numpy as np
@@ -81,41 +84,107 @@ def run_test(t1,filename):
     orb_names = ['%s'%i for i in range(n_orbs)]  # Orbital indices
     gf_struct = op.set_operator_structure(spin_names,orb_names,off_diag=off_diag) 
 
-    #####
-    #
-    # Reference: 4 site cluster, calculate only G, not G2
-    #
-    #####
-    def calc_reference():
+    if haspomerol:
+        #####
+        #
+        # Reference: 4 site cluster, calculate only G, not G2
+        #
+        #####
+        def calc_reference():
 
-        ref_orbs = ['%s'%i for i in range(n_orbs*parms['N_x']*parms['N_y'])]
-        ref_gf_struct = op.set_operator_structure(spin_names,ref_orbs,off_diag=off_diag) 
-        ref_index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
-                    for sn, o in product(spin_names, ref_orbs)}
-        print ref_index_converter,ref_orbs    
-        ref_ed = PomerolED(ref_index_converter, verbose = True)
-        ref_N =sum(ops.n(sn, o) for sn, o in product(spin_names, ref_orbs))
-        #  2 3
-        #  0 1
-        ref_H = (
-                parms["U"] * (
-                    ops.n('up','0') * ops.n('dn','0')
-                    +ops.n('up','1') * ops.n('dn','1')
+            ref_orbs = ['%s'%i for i in range(n_orbs*parms['N_x']*parms['N_y'])]
+            ref_gf_struct = op.set_operator_structure(spin_names,ref_orbs,off_diag=off_diag) 
+            ref_index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
+                        for sn, o in product(spin_names, ref_orbs)}
+            print ref_index_converter,ref_orbs    
+            ref_ed = PomerolED(ref_index_converter, verbose = True)
+            ref_N =sum(ops.n(sn, o) for sn, o in product(spin_names, ref_orbs))
+            #  2 3
+            #  0 1
+            ref_H = (
+                    parms["U"] * (
+                        ops.n('up','0') * ops.n('dn','0')
+                        +ops.n('up','1') * ops.n('dn','1')
+                        )
+                    -2.*parms['t1']*(
+                        ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
+                        +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
+                        )
+                    - parms['chemical_potential']*ref_N
                     )
-                -2.*parms['t1']*(
-                    ops.c_dag('up','0')*ops.c('up','1') + ops.c_dag('up','1')*ops.c('up','0')
-                    +ops.c_dag('dn','0')*ops.c('dn','1') + ops.c_dag('dn','1')*ops.c('dn','0')
-                    )
-                - parms['chemical_potential']*ref_N
-                )
-        # Run the solver
-        ref_ed.diagonalize(ref_H)
-        # Compute G(i\omega)
-        ref_G_iw = ref_ed.G_iw(ref_gf_struct, parms['beta'], parms['n_iw'])
-        return ref_G_iw
+            # Run the solver
+            ref_ed.diagonalize(ref_H)
+            # Compute G(i\omega)
+            ref_G_iw = ref_ed.G_iw(ref_gf_struct, parms['beta'], parms['n_iw'])
+            return ref_G_iw
+                    
+        ref_G_iw = calc_reference()
+        ref=ref_G_iw[ref_spin]
+
+        g2_blocks = set([("up", "up"), ("up", "dn"), ("dn", "up"),("dn","dn")])
+        index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
+                        for sn, o in product(spin_names, orb_names)}
+        
+        
+        # 1 Bath degree of freedom
+        # Level of the bath sites
+        epsilon = [-parms['chemical_potential_bare'],]
+        index_converter.update({("B%i_%s" % (k, sn), 0) : ("bath" + str(k), 0, "down" if sn == "dn" else "up")
+                                for k, sn in product(range(len(epsilon)), spin_names)})
+
+        # Make PomerolED solver object
+        ed = PomerolED(index_converter, verbose = True)
+        N = sum(ops.n(sn, o) for sn, o in product(spin_names, orb_names))
+        H_loc = (
+                    parms["U"] * (ops.n('up','0') * ops.n('dn','0') )
+                    - parms['chemical_potential']*N
+        )
+        
+        
+        # Bath Hamiltonian: levels
+        H_bath = sum(eps*ops.n("B%i_%s" % (k, sn), 0)
+                    for sn, (k, eps) in product(spin_names, enumerate(epsilon)))
+
+        # Hybridization Hamiltonian 
+        # Bath-impurity hybridization
+        V = [-2 *bath_prefactor* t1,]
+        H_hyb = ops.Operator()
+        for k, v in enumerate(V):
+            H_hyb += sum(        v   * ops.c_dag("B%i_%s" % (k, sn), 0) * ops.c(sn, '0') +
+                        np.conj(v)  * ops.c_dag(sn, '0') * ops.c("B%i_%s" % (k, sn), 0)
+                        for sn in spin_names)
+
                 
-    ref_G_iw = calc_reference()
-    ref=ref_G_iw[ref_spin]
+        # Obtain bath sites from Delta and create H_ED
+        H_ED = H_loc+H_bath +H_hyb
+                
+        # Run the solver
+        ed.diagonalize(H_ED)
+        # Compute G(i\omega)
+        G_iw = ed.G_iw(gf_struct, parms['beta'], parms['n_iw'])
+
+
+        if parms["measure_G2_iw_ph"]:
+            common_g2_params = {'gf_struct' : gf_struct,
+                        'beta' : parms['beta'],
+                        'blocks' : g2_blocks,
+                        'n_iw' : parms['measure_G2_n_bosonic']}
+            G2_iw = ed.G2_iw_inu_inup(channel = "PH",
+                                        block_order = "AABB",
+                                        n_inu = parms['measure_G2_n_fermionic'],
+                                        **common_g2_params)
+
+        if mpi.is_master_node(): 
+            with ar.HDFArchive(filename,'w') as arch:
+                arch["parms"] = parms
+                arch["G_iw"] = G_iw
+                arch["G2_iw"] = G2_iw
+                arch["ref"] = ref            
+    else: # haspomerol is False
+        with ar.HDFArchive(filename,'r') as arch:
+            ref = arch['ref']
+            G_iw = arch['G_iw']
+            G2_iw = arch['G2_iw']
 
     # Construct the DF2 program
     X = dualfermion.Dpt(beta=parms['beta'],gf_struct=gf_struct,n_iw=parms['n_iw'],n_iw2=parms["measure_G2_n_fermionic"],n_iW =parms["measure_G2_n_bosonic"],N_x=parms['N_x'],N_y=parms['N_y'],N_z=parms['N_z'])
@@ -127,94 +196,32 @@ def run_test(t1,filename):
         for k in X.Hk.mesh:
             X.Hk[spin][k] = Hk_f(k.value)
 
-    g2_blocks = set([("up", "up"), ("up", "dn"), ("dn", "up"),("dn","dn")])
-    index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
-                    for sn, o in product(spin_names, orb_names)}
-    
-    
-    # 1 Bath degree of freedom
-    # Level of the bath sites
-    epsilon = [-parms['chemical_potential_bare'],]
-    index_converter.update({("B%i_%s" % (k, sn), 0) : ("bath" + str(k), 0, "down" if sn == "dn" else "up")
-                            for k, sn in product(range(len(epsilon)), spin_names)})
-
-    # Make PomerolED solver object
-    ed = PomerolED(index_converter, verbose = True)
-    N = sum(ops.n(sn, o) for sn, o in product(spin_names, orb_names))
-    H_loc = (
-                parms["U"] * (ops.n('up','0') * ops.n('dn','0') )
-                - parms['chemical_potential']*N
-    )
-    
-    
-    # Bath Hamiltonian: levels
-    H_bath = sum(eps*ops.n("B%i_%s" % (k, sn), 0)
-                for sn, (k, eps) in product(spin_names, enumerate(epsilon)))
-
-    # Hybridization Hamiltonian 
-    # Bath-impurity hybridization
-    V = [-2 *bath_prefactor* t1,]
-    H_hyb = ops.Operator()
-    for k, v in enumerate(V):
-        H_hyb += sum(        v   * ops.c_dag("B%i_%s" % (k, sn), 0) * ops.c(sn, '0') +
-                    np.conj(v)  * ops.c_dag(sn, '0') * ops.c("B%i_%s" % (k, sn), 0)
-                    for sn in spin_names)
-
     for name,g0 in X.Delta:
         X.Delta[name] << gf.inverse( gf.iOmega_n+parms['chemical_potential_bare'])*bath_prefactor**2*4*t1**2 
 
-                
-    # Obtain bath sites from Delta and create H_ED
-    H_ED = H_loc+H_bath +H_hyb
-            
-    # Run the solver
-    ed.diagonalize(H_ED)
-    # Compute G(i\omega)
-    G_iw = ed.G_iw(gf_struct, parms['beta'], parms['n_iw'])
-
-
-    if parms["measure_G2_iw_ph"]:
-        common_g2_params = {'gf_struct' : gf_struct,
-                    'beta' : parms['beta'],
-                    'blocks' : g2_blocks,
-                    'n_iw' : parms['measure_G2_n_bosonic']}
-        G2_iw = ed.G2_iw_inu_inup(channel = "PH",
-                                    block_order = "AABB",
-                                    n_inu = parms['measure_G2_n_fermionic'],
-                                    **common_g2_params)
         
-        X.G2_iw << G2_iw
-
-        
-    # Some intermediate saves
-    gimp = G_iw[ref_spin]
-
+    X.G2_iw << G2_iw        
 
     # Run the dual perturbation theory
     X.gimp << G_iw # Load G from impurity solver
     dpt_parms = {key:parms[key] for key in parms if key in dptkeys}
     X.run(**dpt_parms)
         
-    if mpi.is_master_node():        
-        arch = ar.HDFArchive(filename,'w')
-        arch["parms"] = parms
-        arch["gimp"] = gimp
-        arch["ref"] = ref
 
 
 def plot(filename):
     
     if mpi.is_master_node():        
-        arch = ar.HDFArchive(filename,'r')
-        parms = arch["parms"]
+        with ar.HDFArchive(filename,'r') as arch:
+            parms = arch["parms"]
+            t1 = parms['t1']
+            gimp=arch["G_iw"][ref_spin]
+            ref=arch["ref"]
         sigma_k = HDFArchive("sigma_k.h5",'r')['sigma_k'][ref_spin]
         G_k = HDFArchive("G_k.h5",'r')['G_k'][ref_spin]
 
 
         inv = np.linalg.inv
-        t1 = parms['t1']
-        gimp=arch["gimp"]
-        ref=arch["ref"]
 
         # Calculate lattice self-energy
         for ki,k in enumerate(sigma_k.mesh[1]):
@@ -260,7 +267,7 @@ def plot(filename):
 
 if __name__ == "__main__":
     for t1 in [0.02,]:
-        filename = 'arch.h5'
+        filename = 'oneband.ref.h5'
         run_test(t1,filename)
         plot(filename)
 
