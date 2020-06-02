@@ -167,12 +167,11 @@ namespace triqs_dualfermion {
     //gd_real() = fourier<1>(gd0);
     
     auto gd_real = make_gf_from_fourier<1>(gd0);    
-
-    gf_mesh<imfreq> mesh_f{beta, Fermion, n_iw};    
-    gf_mesh<cartesian_product<imfreq, cyclic_lattice>> mesh_fr{mesh_f, rmesh};    
-    sigmad_real = block_gf<cartesian_product<imfreq,cyclic_lattice>>({mesh_fr},gf_struct);
-    //auto sigmad_real = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
+    
+    auto sigmad_real = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
+    auto sigmad_real2 = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
     sigmad_real() = 0;
+    sigmad_real2() = 0;
             
     if (output_stdout) std::cout << "Calculating Sigma dual: assign vertex" << std::endl;
 
@@ -289,15 +288,15 @@ namespace triqs_dualfermion {
       }
     }
     }//sigma2    
-    sigmad_real =  mpi::reduce(sigmad_real, world);
+    sigmad_real2 =  mpi::reduce(sigmad_real, world);
     
     //TODO:
     // Perform the ''upfolding'' here? Or in python
     
     if (output_stdout) std::cout << "Calculating Sigma dual: FT" << std::endl;
-    sigmad = make_gf_from_fourier<1>(sigmad_real);
+    sigmad = make_gf_from_fourier<1>(sigmad_real2);
     if (output_gdr) h5_write(h5::file("gd_real.h5",'w'),"gd_real",gd_real);
-    if (output_sigmadr) h5_write(h5::file("sigmad_real.h5",'w'),"sigmad_real",sigmad_real);
+    if (output_sigmadr) h5_write(h5::file("sigmad_real.h5",'w'),"sigmad_real",sigmad_real2);
     if (output_sigmadk) h5_write(h5::file("sigmad_k.h5",'w'),"sigmad_k",sigmad);
     }
     else{
