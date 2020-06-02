@@ -29,6 +29,9 @@ No assertions are done, the test just checks if everything runs
 from pytriqs.archive import HDFArchive
 from pytriqs.gf import *
 
+import matplotlib
+matplotlib.use('Agg')
+
 import dualfermion.plothelper as plothelper
 
 import numpy as np
