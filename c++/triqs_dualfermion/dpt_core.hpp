@@ -63,6 +63,8 @@ namespace triqs_dualfermion {
     G2_iw_t _G2_iw;    // Two-particle Green's function of the impurity model (1 bosonic, 2 fermionic Matsubara frequencies)
                        // N.B.: Loaded directly from TRIQS/CTHYB, not yet connected and amputated
     G2_iw_t vertex;    // Connected, amputated vertex. Data is stored in _gimp and _G2_iw
+    
+    G_iw_r_t sigmad_real ;
 
     // Struct containing the parameters relevant for the dpt construction
     constr_parameters_t constr_parameters;
