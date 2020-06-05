@@ -286,7 +286,8 @@ namespace triqs_dualfermion {
       }
     }
     }//sigma2    
-    sigmad_real() =  mpi::all_reduce(sigmad_real, world);
+    world.barrier(); // Necessary to avoid segfault on HLRN
+    sigmad_real() =  mpi::reduce(sigmad_real, world);
     
     //TODO:
     // Perform the ''upfolding'' here? Or in python
