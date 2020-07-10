@@ -48,10 +48,11 @@ namespace triqs_dualfermion {
      : constr_parameters(p), beta(p.beta),gf_struct(p.gf_struct),_Hk(p.Hk),n_iw(p.n_iw),n_iW(p.n_iW),n_iw2(p.n_iw2)
      {
 
-      // Allocate single particle greens functions
+      // Allocate single particle Green's functions to make them assignable from the python interface
       _gimp   = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
       _Delta  = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
 
+      // ... and two-particle Green's function
       gf_mesh<imfreq> mesh_f{beta, Fermion, n_iw2};
       gf_mesh<imfreq> mesh_b{beta, Boson, n_iW};
       gf_mesh<cartesian_product<imfreq, imfreq, imfreq>> mesh_bff{mesh_b, mesh_f, mesh_f};
@@ -141,19 +142,13 @@ namespace triqs_dualfermion {
 
     
     if(params.calculate_sigma){
-    //int s1 =0;    
-    //int s2 =0;
 
     if (output_stdout) std::cout << "Calculating Sigma dual" << std::endl;
     
     /* FT gd0 to real space  */
-    //gf_mesh<cyclic_lattice> rmesh( lat, periodization_matrix);
     auto rmesh = make_adjoint_mesh(kmesh) ;
     auto R0 = rmesh[{0,0,0}];
-    
-    //auto gd_real = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
-    //gd_real() = fourier<1>(gd0);
-    
+        
     auto gd_real = make_gf_from_fourier<1>(gd0);    
     
     auto sigmad_real = G_iw_r_t{{ iwmesh ,rmesh},gf_struct} ;
@@ -162,8 +157,14 @@ namespace triqs_dualfermion {
     if (output_stdout) std::cout << "Calculating Sigma dual: assign vertex" << std::endl;
 
     // Calculate the self-energy
-    // Note, need to determine the vertex from G2 and gimp    
+    // First step: precalculate the vertex from G2 and gimp    
+    // Slightly tricky: different Matsubara grids for _gimp and _G2_iw, have to use _gimp[0](n1) instead of _gimp[0][n1]
     
+    //TODO: Timing/memory: 
+    //      Is it necessary to precalculate the vertex and have both vertex and _G2_iw in memory? 
+    //      Would it be better to expose this piece of code as a separate method in python?
+    //      To enable X.vertex << vertex_from_G2(G2_iw,gimp)
+    //      This would also allow, e.g., passing (partial) analytical expressions for the vertex
     
     // TODO:
     // Loops over products could be quite slow (at present), see:
@@ -171,14 +172,7 @@ namespace triqs_dualfermion {
     // Code can be made more performant by replacing the loops by individual loops, ugly
     // Hopefully, in the future this goes away
     // In that case, consider rewriting in CLEF notation becomes sufficiently performant
-    
-    // Calculate vertex first, since it will be used several times. 
-    // Be careful about the vertex band labels here so that they can be used safely later on.    
-    // Slightly tricky: different Matsubara grids for _gimp and _G2_iw, have to use _gimp[0](n1) instead of _gimp[0][n1]
-    
-    //TODO: Timing/memory: is it necessary to precalculate the vertex? 
-    //      Would it be better to expose this as a separate method in python?
-    //      This would also allow, e.g., passing (partial) analytical expressions for the vertex
+        
     vertex  = make_block2_gf(_G2_iw(0,0).mesh(), gf_struct, G2_block_order);    
     vertex() = 0.;
     for (auto const &s2 : range(_gimp.size())) {
@@ -308,6 +302,7 @@ namespace triqs_dualfermion {
     
     // Also calculate sigma_lat here from Dyson's equation, since that is what we are frequently interested in
     // TODO: Some of the tests could be written purely in terms of sigma?
+    // Note: at this point, we do not have access to the chemical potential, so cannot subtract it from Sigma
     if (output_sigmak){
         auto sigma_k = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
         for (auto const &b : range(sigma_k.size())) {
@@ -339,8 +334,9 @@ namespace triqs_dualfermion {
     
     
     /* Update formula        
-       Delta_new = Delta_old + ksi * gimp^-1 Gd_loc Gloc^-1
+       Delta_new = Delta_old + gimp^-1 Gd_loc Gloc^-1
        Now in terms of Gdd = 1/gimp * Gd * 1/gimp
+       Mixing etc. can be done in python
      */
     if (output_stdout) std::cout << "Evaluate new Delta" << std::endl;
     _Delta(wn_) << _Delta(wn_) + gdloc(wn_) * _gimp(wn_)/gloc(wn_);
