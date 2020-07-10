@@ -29,7 +29,7 @@ import numpy as np
 class Dpt(DptCore):
 #TODO: which parameters to give at initialization, which at run?
 
-    def __init__(self, beta, gf_struct, n_iw=128, n_iw2=32,n_iW=31,N_x=1,N_y=1,N_z=1):
+    def __init__(self, beta, gf_struct,Hk, n_iw=128, n_iw2=32,n_iW=31):
         """
         Initialise the dual perturbation theory.
 
@@ -55,16 +55,10 @@ class Dpt(DptCore):
             gf_struct = [ [k, v] for k, v in gf_struct.iteritems() ]
 
         # Initialise the dual perturbation theory. 
-        DptCore.__init__(self, beta=beta, gf_struct=gf_struct, 
-                            n_iw=n_iw,n_iw2=n_iw2,n_iW=n_iW,N_x=N_x,N_y=N_y,N_z=N_z)
+        DptCore.__init__(self, beta=beta, gf_struct=gf_struct,Hk=Hk,n_iw=n_iw,n_iw2=n_iw2,n_iW=n_iW 
+                            )
 
         self.gf_struct = gf_struct
-        self.n_iw = n_iw
-        self.n_iw2= n_iw2
-        self.n_iW = n_iW
-        self.N_x  = N_x
-        self.N_y  = N_y
-        self.N_z  = N_z
 
     def run(self, **params_kw):
         """

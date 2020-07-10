@@ -32,6 +32,7 @@ import pytriqs.operators as ops
 import pytriqs.operators.util as op
 import pytriqs.utility.mpi as mpi
 import pytriqs.archive as ar
+import pytriqs.lattice.lattice_tools as lattice
 from pytriqs.archive import HDFArchive
 from itertools import product
 
@@ -186,15 +187,22 @@ def run_test(t1,filename):
             G_iw = arch['G_iw']
             G2_iw = arch['G2_iw']
 
-    # Construct the DF2 program
-    X = dualfermion.Dpt(beta=parms['beta'],gf_struct=gf_struct,n_iw=parms['n_iw'],n_iw2=parms["measure_G2_n_fermionic"],n_iW =parms["measure_G2_n_bosonic"],N_x=parms['N_x'],N_y=parms['N_y'],N_z=parms['N_z'])
+    BL = lattice.BravaisLattice(units = [(1,0,0) , ]) #linear lattice
+    kmesh = gf.MeshBrillouinZone(lattice.BrillouinZone(BL), parms["N_x"])
+    Hk_blocks = [gf.Gf(indices=orb_names,mesh=kmesh) for spin in spin_names]
+    Hk = gf.BlockGf(name_list = spin_names,block_list=Hk_blocks)
+
 
     def Hk_f(k):
         return -2 *parms['t1'] * (np.cos(k[0]))*np.eye(1)
 
-    for spin,_ in X.Hk:
-        for k in X.Hk.mesh:
-            X.Hk[spin][k] = Hk_f(k.value)
+    for spin,_ in Hk:
+        for k in Hk.mesh:
+            Hk[spin][k] = Hk_f(k.value)
+
+    # Construct the DF2 program
+    X = dualfermion.Dpt(beta=parms['beta'],gf_struct=gf_struct,Hk=Hk,n_iw=parms['n_iw'],n_iw2=parms["measure_G2_n_fermionic"],n_iW =parms["measure_G2_n_bosonic"])
+
 
     for name,g0 in X.Delta:
         X.Delta[name] << gf.inverse( gf.iOmega_n+parms['chemical_potential_bare'])*bath_prefactor**2*4*t1**2 

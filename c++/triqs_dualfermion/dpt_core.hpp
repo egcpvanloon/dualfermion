@@ -45,8 +45,6 @@ namespace triqs_dualfermion {
     int n_iw2;
     int n_iW;
     
-    int N_x,N_y,N_z;
-
     int _status;                     // Status of the run upon exit: 0 for clean termination, > 0 otherwise.
 
     // Return reference to container_set
@@ -70,6 +68,9 @@ namespace triqs_dualfermion {
     // Struct containing the parameters of the last call to the run method
     run_parameters_t run_parameters;
 
+    /// Order of block indices in the definition of G^2.
+    block_order G2_block_order = block_order::AABB;    
+    
     public:
 
     /**

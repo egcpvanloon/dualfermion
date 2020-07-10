@@ -45,30 +45,18 @@ mpi::communicator world;
 namespace triqs_dualfermion {
 
   dpt_core::dpt_core(constr_parameters_t const &p)
-     : constr_parameters(p), beta(p.beta), gf_struct(p.gf_struct),n_iw(p.n_iw),n_iW(p.n_iW),n_iw2(p.n_iw2),N_x(p.N_x),N_y(p.N_y),N_z(p.N_z) {
-         
-    // Allocate single particle greens functions
-    _gimp   = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
-    _Delta  = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
+     : constr_parameters(p), beta(p.beta),gf_struct(p.gf_struct),_Hk(p.Hk),n_iw(p.n_iw),n_iW(p.n_iW),n_iw2(p.n_iw2)
+     {
 
-    matrix<int> periodization_matrix(3,3) ;
-    periodization_matrix() = 0;
-    periodization_matrix(0,0) = N_x;
-    periodization_matrix(1,1) = N_y;
-    periodization_matrix(2,2) = N_z;
-    
-    const bravais_lattice lat ;
-    const brillouin_zone bz(lat) ;
-    gf_mesh<brillouin_zone> kmesh( bz, periodization_matrix);
+      // Allocate single particle greens functions
+      _gimp   = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
+      _Delta  = block_gf<imfreq>({beta, Fermion, n_iw}, gf_struct);
 
-    _Hk     = block_gf<brillouin_zone>({kmesh},gf_struct);
+      gf_mesh<imfreq> mesh_f{beta, Fermion, n_iw2};
+      gf_mesh<imfreq> mesh_b{beta, Boson, n_iW};
+      gf_mesh<cartesian_product<imfreq, imfreq, imfreq>> mesh_bff{mesh_b, mesh_f, mesh_f};
+      _G2_iw  = make_block2_gf(mesh_bff, gf_struct, G2_block_order);
     
-    
-     gf_mesh<imfreq> mesh_f{beta, Fermion, n_iw2};
-     gf_mesh<imfreq> mesh_b{beta, Boson, n_iW};
-     gf_mesh<cartesian_product<imfreq, imfreq, imfreq>> mesh_bff{mesh_b, mesh_f, mesh_f};
-    _G2_iw  = make_block2_gf(mesh_bff, gf_struct, p.G2_block_order);
-    vertex  = make_block2_gf(mesh_bff, gf_struct, p.G2_block_order);
   }
 
   /// -------------------------------------------------------------------------------------------
@@ -102,7 +90,7 @@ namespace triqs_dualfermion {
     
                    
     auto kmesh = _Hk[0].mesh(); // Note that Hk also has a spin index, Hk[0] takes Hk for a single spin. 
-    
+    auto iwmesh= _Delta[0].mesh();
     // Placeholders
     placeholder<0> wn_; // Frequency -- Fermionic
     //placeholder<1> wn1_; // Frequency -- Fermionic 
@@ -114,7 +102,7 @@ namespace triqs_dualfermion {
     // Assumes that 1/iw has been loaded into gimp
     // And iw into Delta
     if(params.delta_initial){
-        auto gloc  = G_iw_t{{beta,Fermion,n_iw},gf_struct} ;  
+        auto gloc  = G_iw_t{iwmesh,gf_struct} ;  
     
         // First set to zero
         gloc() = 0. ;
@@ -136,7 +124,7 @@ namespace triqs_dualfermion {
 
 
     // Create the container for the bare dual Green's function
-    auto gd0 = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
+    auto gd0 = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
     
     if (output_stdout) std::cout << "Initializing gd0" <<std::endl;    
     // Load the values of the bare dual Green's function                   
@@ -149,7 +137,7 @@ namespace triqs_dualfermion {
     
     
     /* Initialize empty Sigma_dual in momentum space */
-    auto sigmad = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;
+    auto sigmad = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;
 
     
     if(params.calculate_sigma){
@@ -168,7 +156,7 @@ namespace triqs_dualfermion {
     
     auto gd_real = make_gf_from_fourier<1>(gd0);    
     
-    auto sigmad_real = G_iw_r_t{{ {beta,Fermion,n_iw} ,rmesh},gf_struct} ;
+    auto sigmad_real = G_iw_r_t{{ iwmesh ,rmesh},gf_struct} ;
     sigmad_real() = 0;
             
     if (output_stdout) std::cout << "Calculating Sigma dual: assign vertex" << std::endl;
@@ -190,6 +178,8 @@ namespace triqs_dualfermion {
     
     //TODO: Timing/memory: is it necessary to precalculate the vertex? 
     //      Would it be better to expose this as a separate method in python?
+    //      This would also allow, e.g., passing (partial) analytical expressions for the vertex
+    vertex  = make_block2_gf(_G2_iw(0,0).mesh(), gf_struct, G2_block_order);    
     vertex() = 0.;
     for (auto const &s2 : range(_gimp.size())) {
       for (auto const &s1 : range(_gimp.size())) {
@@ -306,7 +296,7 @@ namespace triqs_dualfermion {
     
     if (output_stdout) std::cout << "Calculating Glat" << std::endl;
     // Create the container for the lattice Green's function
-    auto glat = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
+    auto glat = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
     for (auto const &b : range(glat.size())) {
         for (const auto &[iw,k] : glat[b].mesh()){
             glat[b][iw,k] = 1./( 1./(_gimp[b][iw]+sigmad[b][iw,k]) + _Delta[b][iw] - _Hk[b](k)  );
@@ -319,7 +309,7 @@ namespace triqs_dualfermion {
     // Also calculate sigma_lat here from Dyson's equation, since that is what we are frequently interested in
     // TODO: Some of the tests could be written purely in terms of sigma?
     if (output_sigmak){
-        auto sigma_k = G_iw_k_t{{ {beta,Fermion,n_iw} ,kmesh},gf_struct} ;  
+        auto sigma_k = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
         for (auto const &b : range(sigma_k.size())) {
             for (const auto &[iw,k] : sigma_k[b].mesh()){
                 sigma_k[b][iw,k] = iw - _Hk[b](k)  -1./glat[b][iw,k];
@@ -330,8 +320,8 @@ namespace triqs_dualfermion {
 
     
     /* Calculate local part of Gd and Gloc */
-    auto gloc  = G_iw_t{{beta,Fermion,n_iw},gf_struct} ;  
-    auto gdloc = G_iw_t{{beta,Fermion,n_iw},gf_struct} ;
+    auto gloc  = G_iw_t{iwmesh,gf_struct} ;  
+    auto gdloc = G_iw_t{iwmesh,gf_struct} ;
     
     // First set to zero
     gloc() = 0. ;

@@ -129,6 +129,11 @@ c.add_member(c_name = "gf_struct",
              initializer = """  """,
              doc = """block structure of the gf""")
 
+c.add_member(c_name = "Hk",
+             c_type = "triqs::gfs::block_gf<brillouin_zone, matrix_valued>",
+             initializer = """  """,
+             doc = """Dispersion""")
+
 c.add_member(c_name = "n_iw",
              c_type = "int",
              initializer = """ 128 """,
@@ -143,19 +148,6 @@ c.add_member(c_name = "n_iW",
              c_type = "int",
              initializer = """ 31 """,
              doc = """Number of Bosonic Matsubara frequencies for G2""")
-
-c.add_member(c_name = "N_x",
-             c_type = "int",
-             initializer = """ 1 """,
-             doc = """N_x.""")
-c.add_member(c_name = "N_y",
-             c_type = "int",
-             initializer = """ 1 """,
-             doc = """N_y.""")
-c.add_member(c_name = "N_z",
-             c_type = "int",
-             initializer = """ 1 """,
-             doc = """N_z.""")
 
 
 module.add_converter(c)

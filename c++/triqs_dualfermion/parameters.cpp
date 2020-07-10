@@ -65,24 +65,12 @@ namespace triqs_dualfermion {
     triqs::h5::group grp = name.empty() ? h5group : h5group.create_group(name);
     h5_write(grp, "beta", cp.beta);
     h5_write(grp, "gf_struct", cp.gf_struct);
-    h5_write(grp, "n_iw", cp.n_iw);
-    h5_write(grp, "n_iW", cp.n_iW);
-    h5_write(grp, "n_iw2", cp.n_iw2);
-    h5_write(grp, "N_x", cp.N_x);
-    h5_write(grp, "N_y", cp.N_y);
-    h5_write(grp, "N_z", cp.N_z);    
   }
 
   void h5_read(triqs::h5::group h5group, std::string name, constr_parameters_t &cp) {
     triqs::h5::group grp = name.empty() ? h5group : h5group.open_group(name);
     h5_read(grp, "beta", cp.beta);
     h5_read(grp, "gf_struct", cp.gf_struct);
-    h5_read(grp, "n_iw", cp.n_iw);
-    h5_read(grp, "n_iW", cp.n_iW);
-    h5_read(grp, "n_iw2", cp.n_iw2);
-    h5_read(grp, "N_x", cp.N_x);
-    h5_read(grp, "N_y", cp.N_y);
-    h5_read(grp, "N_z", cp.N_z);
   }
 
   void h5_write(triqs::h5::group h5group, std::string name, run_parameters_t const &sp) {

@@ -40,25 +40,21 @@ namespace triqs_dualfermion {
 
     ///block structure of the gf
     gf_struct_t gf_struct;
-
+    
     /// Number of Matsubara frequencies for gf<imfreq, matrix_valued>
     int n_iw = 128;
     int n_iW = 31;
     int n_iw2 = 32;
     
-    int N_x = 1;
-    int N_y = 1;
-    int N_z = 1;
     
+    G_k_t Hk;
+        
     /// Write constr_parameters_t to hdf5
     friend void h5_write(triqs::h5::group h5group, std::string subgroup_name, constr_parameters_t const &sp);
 
     /// Read constr_parameters_t from hdf5
     friend void h5_read(triqs::h5::group h5group, std::string subgroup_name, constr_parameters_t &sp);
-    
-    /// Order of block indices in the definition of G^2.
-    block_order G2_block_order = block_order::AABB;    
-    
+        
   };
   
   // All the arguments of the run function
