@@ -24,7 +24,7 @@
 import matplotlib.pyplot as plt
 
 
-def mesh_plot(klist,x,y,c=None,fig=None,**kwargs):
+def mesh_plot(klist,x,y,c=None,**kwargs):
     """
         Makes a plot
         The general structure is that klist contains mesh points k,
@@ -32,11 +32,7 @@ def mesh_plot(klist,x,y,c=None,fig=None,**kwargs):
 
         
         klist can be a list or generator
-    """
-    
-    if fig is None:
-        fig=plt.figure()
-        
+    """            
 
     x_list=[ x(k) for k in klist]
     y_list=[ y(k) for k in klist]
