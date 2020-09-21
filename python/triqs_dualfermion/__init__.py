@@ -25,7 +25,7 @@ r"""
 DOC
 
 """
-from dpt import Dpt
-from dpt_core import DptCore
+from .dpt import Dpt
+from .dpt_core import DptCore
 
 __all__ = ['Dpt', 'DptCore']

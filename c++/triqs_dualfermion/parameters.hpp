@@ -24,7 +24,7 @@
 #pragma once
 
 #include "./types.hpp"
-#include <boost/mpi.hpp>
+#include <h5/h5.hpp>
 #include <triqs/operators/many_body_operator.hpp>
 
 namespace triqs_dualfermion {
@@ -62,7 +62,7 @@ namespace triqs_dualfermion {
 
     /// Verbosity level
     /// default: 3 on MPI rank 0, 0 otherwise.
-    int verbosity = ((boost::mpi::communicator().rank() == 0) ? 3 : 0); // silence the slave nodes
+    int verbosity = ((mpi::communicator().rank() == 0) ? 3 : 0);
     
     
     gf_struct_t sigmad_subset;

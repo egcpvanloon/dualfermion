@@ -27,8 +27,6 @@
 #include "container_set.hpp"
 #include "parameters.hpp"
 
-#include <boost/mpi.hpp>
-
 #include <triqs/lattice/brillouin_zone.hpp>
 #include <triqs/lattice/bravais_lattice.hpp>
 #include <triqs/lattice/gf_mesh_brillouin_zone.hpp>
@@ -144,4 +142,4 @@ namespace triqs_dualfermion {
       return s;
     }
   };
-} // namespace triqs_cthyb
+} // namespace triqs_dualfermion

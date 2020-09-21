@@ -1,6 +1,6 @@
 # ##############################################################################
 #
-# dualfermion - An example application using triqs and cpp2py
+# dualfermion - An example application using triqs
 #
 # Copyright (C) 2020 E. van Loon
 #
@@ -26,13 +26,12 @@ endif()
 
 # ############
 # Define Project
-project(DUALFERMION VERSION 3.0.0 LANGUAGES C CXX)
+project(triqs_dualfermion VERSION 3.0.0 LANGUAGES C CXX)
 get_directory_property(IS_SUBPROJECT PARENT_DIRECTORY)
 
 # ############
 # Load TRIQS and CPP2PY
 find_package(TRIQS 3.0 REQUIRED)
-find_package(Cpp2Py 1.6 REQUIRED)
 
 # Get the git hash & print status
 triqs_get_git_hash_of_source_dir(PROJECT_GIT_HASH)
@@ -50,7 +49,10 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR (NOT IS_ABSOLUTE ${CMAKE_INSTA
   set(CMAKE_INSTALL_PREFIX ${TRIQS_ROOT} CACHE PATH "default install path" FORCE)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE)
 endif()
-message(STATUS "-------- CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX} --------")
+if(NOT IS_SUBPROJECT)
+  message(STATUS "-------- CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX} --------")
+endif()
+set(${PROJECT_NAME}_BINARY_DIR ${PROJECT_BINARY_DIR} CACHE STRING "Binary directory of the ${PROJECT_NAME} Project")
 
 # ############
 # Options
@@ -71,29 +73,35 @@ add_compile_options(
 )
 
 # Create an Interface target for compiler warnings
-if(NOT TARGET project_warnings)
-  add_library(project_warnings INTERFACE)
-endif()
-install(TARGETS project_warnings EXPORT dualfermion-targets)
-target_compile_options(project_warnings
+add_library(${PROJECT_NAME}_warnings INTERFACE)
+target_compile_options(${PROJECT_NAME}_warnings
   INTERFACE
     -Wall
     -Wextra
     -Wpedantic
     -Wno-sign-compare
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-comma-subscript>
     $<$<CXX_COMPILER_ID:GNU>:-Wshadow=local>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-attributes>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-deprecated-comma-subscript>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-warning-option>
     $<$<CXX_COMPILER_ID:Clang>:-Wshadow>
     $<$<CXX_COMPILER_ID:Clang>:-Wno-gcc-compat>
+    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-deprecated-comma-subscript>
+    $<$<CXX_COMPILER_ID:AppleClang>:-Wno-unknown-warning-option>
     $<$<CXX_COMPILER_ID:AppleClang>:-Wshadow>
     $<$<CXX_COMPILER_ID:AppleClang>:-Wno-gcc-compat>
 )
 
+
 # #############
 # Build Project
 
-# Build and install the dualfermion library
-add_subdirectory(c++/triqs_dualfermion)
+# Find / Build dependencies
+add_subdirectory(deps)
+
+# Build and install the library
+add_subdirectory(c++/${PROJECT_NAME})
 
 # Tests
 option(Build_Tests "Build tests" ON)
@@ -104,7 +112,7 @@ endif()
 
 if(TRIQS_WITH_PYTHON_SUPPORT)
   # Python interface
-  add_subdirectory(python/triqs_dualfermion)
+  add_subdirectory(python/${PROJECT_NAME})
 
   # Build the documentation
   option(Build_Documentation "Build documentation" OFF)
@@ -131,12 +139,13 @@ if(BUILD_DEBIAN_PACKAGE AND NOT IS_SUBPROJECT)
   if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
     message(FATAL_ERROR "CMAKE_INSTALL_PREFIX must be /usr for packaging")
   endif()
-  set(CPACK_PACKAGE_NAME dualfermion)
+  set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
   set(CPACK_GENERATOR "DEB")
   set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
   set(CPACK_PACKAGE_CONTACT "https://github.com/egcpvanloon/dualfermion")
   execute_process(COMMAND dpkg --print-architecture OUTPUT_VARIABLE CMAKE_DEBIAN_PACKAGE_ARCHITECTURE OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "triqs (>= 2.2)")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "triqs (>= 3.0)")
+  set(CPACK_DEBIAN_PACKAGE_CONFLICTS "dualfermion")
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS ON)
   include(CPack)

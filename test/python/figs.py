@@ -32,7 +32,7 @@ from triqs.gf import *
 import matplotlib
 matplotlib.use('Agg')
 
-import dualfermion.plothelper as plothelper
+import triqs_dualfermion.plothelper as plothelper
 
 import numpy as np
 

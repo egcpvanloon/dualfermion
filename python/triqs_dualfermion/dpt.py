@@ -21,7 +21,7 @@
 #
 ################################################################################
 
-from dpt_core  import DptCore
+from .dpt_core  import DptCore
 from triqs.gf import *
 import triqs.utility.mpi as mpi
 import numpy as np
@@ -51,7 +51,7 @@ class Dpt(DptCore):
                Number of Bosonic Matsubara frequencies used for the Two-Particle Green's functions.
         """
         if isinstance(gf_struct,dict):
-            print "WARNING: gf_struct should be a list of pairs [ [str,[int,...]], ...], not a dict"
+            print( "WARNING: gf_struct should be a list of pairs [ [str,[int,...]], ...], not a dict")
             gf_struct = [ [k, v] for k, v in gf_struct.iteritems() ]
 
         # Initialise the dual perturbation theory. 

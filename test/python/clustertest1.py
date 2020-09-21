@@ -31,7 +31,7 @@ method (2) should agree well with (1), since DF is exact to second-order in t1/U
 """
 
 
-import dualfermion
+import triqs_dualfermion as dualfermion
 
 import triqs.gf as gf
 

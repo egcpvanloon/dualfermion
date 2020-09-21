@@ -29,7 +29,6 @@
 #include <triqs/gfs.hpp>
 #include <triqs/utility/time_pt.hpp>
 #include <triqs/hilbert_space/fundamental_operator_set.hpp> // gf_struct_t
-#include <triqs/statistics/histograms.hpp>
 
 #include <triqs/lattice/brillouin_zone.hpp>
 #include <triqs/lattice/bravais_lattice.hpp>
@@ -42,8 +41,6 @@ namespace triqs_dualfermion {
 
   using namespace triqs::gfs;
   using namespace triqs::utility;
-  using namespace triqs::statistics;
-  namespace h5 = h5;
 
   using triqs::hilbert_space::gf_struct_t;
   using triqs::utility::time_pt;

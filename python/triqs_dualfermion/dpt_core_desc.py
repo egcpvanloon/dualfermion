@@ -4,10 +4,7 @@ from cpp2py.wrap_generator import *
 module = module_(full_name = "dpt_core", doc = "dual fermion runr", app_name = "triqs_dualfermion")
 
 # Imports
-#import triqs.atom_diag
-import triqs.gf
-import triqs.operators
-import triqs.statistics.histograms
+module.add_imports(*['triqs.gf', 'triqs.operators', 'h5._h5py'])
 
 # Add here all includes
 module.add_include("triqs_dualfermion/dpt_core.hpp")
@@ -19,18 +16,18 @@ module.add_preamble("""
 #include <cpp2py/converters/optional.hpp>
 #include <cpp2py/converters/pair.hpp>
 #include <cpp2py/converters/set.hpp>
+#include <cpp2py/converters/std_array.hpp>
 #include <cpp2py/converters/string.hpp>
 #include <cpp2py/converters/variant.hpp>
 #include <cpp2py/converters/vector.hpp>
 #include <triqs/cpp2py_converters/arrays.hpp>
 #include <triqs/cpp2py_converters/gf.hpp>
 #include <triqs/cpp2py_converters/operators_real_complex.hpp>
-#include <boost/mpi.hpp>
 
 using namespace triqs_dualfermion;
 """)
 
-module.add_enum("block_order", ['block_order::AABB', 'block_order::ABBA'], "triqs_dualfermion", """Order of block indices for Block2Gf objects""")
+module.add_enum("block_order", ['block_order::AABB', 'block_order::ABBA'], "triqs_dualfermion", doc = r"""Order of block indices for Block2Gf objects""")
 
 # The class dpt_core
 c = class_(
@@ -44,10 +41,6 @@ c.add_constructor("""(**triqs_dualfermion::constr_parameters_t)""", doc = """Ini
 
 c.add_method("""void run (**triqs_dualfermion::run_parameters_t)""",
              doc = """Run the dual perturbation theory once.""")
-
-c.add_method("""std::string hdf5_format ()""",
-             is_static = True,
-             doc = """""")
 
 c.add_property(name = "last_constr_parameters",
                getter = cfunction("triqs_dualfermion::constr_parameters_t last_constr_parameters ()"),
@@ -103,8 +96,9 @@ c.add_member(c_name = "sigmad_subset",
              doc = """Subset of indices to use for the evaluation of sigmad""")
 c.add_member(c_name = "verbosity",
              c_type = "int",
-             initializer = """ ((boost::mpi::communicator().rank()==0)?3:0) """,
-             doc = """Verbosity level\n     default: 3 on MPI rank 0, 0 otherwise.""")
+             initializer = """ ((mpi::communicator().rank()==0)?3:0) """,
+             doc = r"""Verbosity level
+     default: 3 on MPI rank 0, 0 otherwise.""")
 c.add_member(c_name = "delta_initial",
              c_type = "bool",
              initializer = """ false """,

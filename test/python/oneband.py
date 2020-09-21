@@ -24,7 +24,7 @@
 """
 """
 
-import dualfermion
+import triqs_dualfermion as dualfermion
 
 import triqs.gf as gf
 
@@ -97,7 +97,7 @@ def run_test(t1,filename):
             ref_gf_struct = op.set_operator_structure(spin_names,ref_orbs,off_diag=off_diag) 
             ref_index_converter = {(sn, o) : ("loc", int(o), "down" if sn == "dn" else "up")
                         for sn, o in product(spin_names, ref_orbs)}
-            print ref_index_converter,ref_orbs    
+            #print ref_index_converter,ref_orbs    
             ref_ed = PomerolED(ref_index_converter, verbose = True)
             ref_N =sum(ops.n(sn, o) for sn, o in product(spin_names, ref_orbs))
             #  2 3

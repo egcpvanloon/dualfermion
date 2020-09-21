@@ -33,7 +33,7 @@ This script tests the sigmad_subset option of the code: only the 'up' dual self-
 """
 
 
-import dualfermion
+import triqs_dualfermion as dualfermion
 
 import triqs.gf as gf
 
