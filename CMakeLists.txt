@@ -26,12 +26,12 @@ endif()
 
 # ############
 # Define Project
-project(DUALFERMION VERSION 2.2.0 LANGUAGES C CXX)
+project(DUALFERMION VERSION 3.0.0 LANGUAGES C CXX)
 get_directory_property(IS_SUBPROJECT PARENT_DIRECTORY)
 
 # ############
 # Load TRIQS and CPP2PY
-find_package(TRIQS 2.2 REQUIRED)
+find_package(TRIQS 3.0 REQUIRED)
 find_package(Cpp2Py 1.6 REQUIRED)
 
 # Get the git hash & print status
