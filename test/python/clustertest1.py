@@ -33,14 +33,14 @@ method (2) should agree well with (1), since DF is exact to second-order in t1/U
 
 import dualfermion
 
-import pytriqs.gf as gf
+import triqs.gf as gf
 
-import pytriqs.operators as ops
-import pytriqs.operators.util as op
-import pytriqs.utility.mpi as mpi
-import pytriqs.archive as ar
-import pytriqs.lattice.lattice_tools as lattice
-from pytriqs.archive import HDFArchive
+import triqs.operators as ops
+import triqs.operators.util as op
+import triqs.utility.mpi as mpi
+import h5 as ar
+import triqs.lattice.lattice_tools as lattice
+from h5 import HDFArchive
 from itertools import product
 
 # Set to True to generate the .ref.h5 as well

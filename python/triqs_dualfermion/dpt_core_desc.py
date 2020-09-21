@@ -4,10 +4,10 @@ from cpp2py.wrap_generator import *
 module = module_(full_name = "dpt_core", doc = "dual fermion runr", app_name = "triqs_dualfermion")
 
 # Imports
-#import pytriqs.atom_diag
-import pytriqs.gf
-import pytriqs.operators
-import pytriqs.statistics.histograms
+#import triqs.atom_diag
+import triqs.gf
+import triqs.operators
+import triqs.statistics.histograms
 
 # Add here all includes
 module.add_include("triqs_dualfermion/dpt_core.hpp")
@@ -25,7 +25,6 @@ module.add_preamble("""
 #include <triqs/cpp2py_converters/arrays.hpp>
 #include <triqs/cpp2py_converters/gf.hpp>
 #include <triqs/cpp2py_converters/operators_real_complex.hpp>
-#include <triqs/cpp2py_converters/h5.hpp>
 #include <boost/mpi.hpp>
 
 using namespace triqs_dualfermion;
@@ -46,7 +45,7 @@ c.add_constructor("""(**triqs_dualfermion::constr_parameters_t)""", doc = """Ini
 c.add_method("""void run (**triqs_dualfermion::run_parameters_t)""",
              doc = """Run the dual perturbation theory once.""")
 
-c.add_method("""std::string hdf5_scheme ()""",
+c.add_method("""std::string hdf5_format ()""",
              is_static = True,
              doc = """""")
 

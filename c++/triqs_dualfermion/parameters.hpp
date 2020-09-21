@@ -50,10 +50,10 @@ namespace triqs_dualfermion {
     G_k_t Hk;
         
     /// Write constr_parameters_t to hdf5
-    friend void h5_write(triqs::h5::group h5group, std::string subgroup_name, constr_parameters_t const &sp);
+    friend void h5_write(h5::group h5group, std::string subgroup_name, constr_parameters_t const &sp);
 
     /// Read constr_parameters_t from hdf5
-    friend void h5_read(triqs::h5::group h5group, std::string subgroup_name, constr_parameters_t &sp);
+    friend void h5_read(h5::group h5group, std::string subgroup_name, constr_parameters_t &sp);
         
   };
   
@@ -82,10 +82,10 @@ namespace triqs_dualfermion {
     run_parameters_t() {}
 
     /// Write run_parameters_t to hdf5
-    friend void h5_write(triqs::h5::group h5group, std::string subgroup_name, run_parameters_t const &sp);
+    friend void h5_write(h5::group h5group, std::string subgroup_name, run_parameters_t const &sp);
 
     /// Read run_parameters_t from hdf5
-    friend void h5_read(triqs::h5::group h5group, std::string subgroup_name, run_parameters_t &sp);
+    friend void h5_read(h5::group h5group, std::string subgroup_name, run_parameters_t &sp);
 
   };
 

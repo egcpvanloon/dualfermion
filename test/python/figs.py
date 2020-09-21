@@ -26,8 +26,8 @@ No assertions are done, the test just checks if everything runs
 """
 
 
-from pytriqs.archive import HDFArchive
-from pytriqs.gf import *
+from h5 import HDFArchive
+from triqs.gf import *
 
 import matplotlib
 matplotlib.use('Agg')
@@ -38,8 +38,8 @@ import numpy as np
 
 import itertools
 
-from pytriqs.lattice import BravaisLattice, BrillouinZone
-from pytriqs.gf import Gf, MeshProduct, MeshBrillouinZone, MeshImFreq
+from triqs.lattice import BravaisLattice, BrillouinZone
+from triqs.gf import Gf, MeshProduct, MeshBrillouinZone, MeshImFreq
 
 n_k = 32
 n_w = 20

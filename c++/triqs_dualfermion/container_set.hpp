@@ -40,10 +40,10 @@ namespace triqs_dualfermion {
     std::optional<G2_iw_t> G2_iw;
 
     /// Function that writes all containers to hdf5 file
-    friend void h5_write(triqs::h5::group h5group, std::string subgroup_name, container_set_t const &c);
+    friend void h5_write(h5::group h5group, std::string subgroup_name, container_set_t const &c);
 
     /// Function that reads all containers to hdf5 file
-    friend void h5_read(triqs::h5::group h5group, std::string subgroup_name, container_set_t &c);
+    friend void h5_read(h5::group h5group, std::string subgroup_name, container_set_t &c);
 
   }; // struct container_set_t
 

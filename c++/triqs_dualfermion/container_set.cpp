@@ -26,13 +26,13 @@
 namespace triqs_dualfermion {
 
   /// Function that writes all containers to hdf5 file
-  void h5_write(triqs::h5::group h5group, std::string subgroup_name, container_set_t const &c) {
-    triqs::h5::group grp = subgroup_name.empty() ? h5group : h5group.create_group(subgroup_name);
+  void h5_write(h5::group h5group, std::string subgroup_name, container_set_t const &c) {
+    h5::group grp = subgroup_name.empty() ? h5group : h5group.create_group(subgroup_name);
   }
 
   /// Function that reads all containers to hdf5 file
-  void h5_read(triqs::h5::group h5group, std::string subgroup_name, container_set_t &c) {
-    triqs::h5::group grp = subgroup_name.empty() ? h5group : h5group.open_group(subgroup_name);
+  void h5_read(h5::group h5group, std::string subgroup_name, container_set_t &c) {
+    h5::group grp = subgroup_name.empty() ? h5group : h5group.open_group(subgroup_name);
   }
 
 } // namespace triqs_dualfermion

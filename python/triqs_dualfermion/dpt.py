@@ -22,8 +22,8 @@
 ################################################################################
 
 from dpt_core  import DptCore
-from pytriqs.gf import *
-import pytriqs.utility.mpi as mpi
+from triqs.gf import *
+import triqs.utility.mpi as mpi
 import numpy as np
 
 class Dpt(DptCore):

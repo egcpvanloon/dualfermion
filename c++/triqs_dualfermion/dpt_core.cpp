@@ -27,7 +27,7 @@
 #include <triqs/utility/exceptions.hpp>
 #include <triqs/gfs.hpp>
 #include <fstream>
-#include <triqs/utility/variant.hpp>
+#include <variant>
 
 #include <triqs/lattice/brillouin_zone.hpp>
 #include <triqs/lattice/bravais_lattice.hpp>

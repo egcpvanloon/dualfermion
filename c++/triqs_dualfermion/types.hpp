@@ -36,14 +36,14 @@
 #include <triqs/lattice/gf_mesh_brillouin_zone.hpp>
 
 
-#include <triqs/utility/variant.hpp>
+#include <variant>
 
 namespace triqs_dualfermion {
 
   using namespace triqs::gfs;
   using namespace triqs::utility;
   using namespace triqs::statistics;
-  namespace h5 = triqs::h5;
+  namespace h5 = h5;
 
   using triqs::hilbert_space::gf_struct_t;
   using triqs::utility::time_pt;
@@ -65,11 +65,11 @@ namespace triqs_dualfermion {
   /// Order of block indices for Block2Gf objects
   enum class block_order { AABB, ABBA };
   
-  inline void h5_write(triqs::h5::group h5group, std::string name, block_order const &bo) {
+  inline void h5_write(h5::group h5group, std::string name, block_order const &bo) {
     h5_write(h5group, name, static_cast<int>(bo));
   }
 
-  inline void h5_read(triqs::h5::group h5group, std::string name, block_order &bo) {
+  inline void h5_read(h5::group h5group, std::string name, block_order &bo) {
     int idx;
     h5_read(h5group, name, idx);
     bo = static_cast<block_order>(idx);

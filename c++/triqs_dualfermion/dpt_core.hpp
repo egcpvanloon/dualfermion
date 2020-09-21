@@ -115,12 +115,12 @@ namespace triqs_dualfermion {
     /// Status of the ``run()`` on exit.
     int status() const { return _status; }
 
-    static std::string hdf5_scheme() { return "dualfermion_DptCore"; }
+    static std::string hdf5_format() { return "dualfermion_DptCore"; }
 
     // Function that writes the dpt_core to hdf5 file
-    friend void h5_write(triqs::h5::group h5group, std::string subgroup_name, dpt_core const &s) {
-      triqs::h5::group grp = subgroup_name.empty() ? h5group : h5group.create_group(subgroup_name);
-      h5_write_attribute(grp, "TRIQS_HDF5_data_scheme", dpt_core::hdf5_scheme());
+    friend void h5_write(h5::group h5group, std::string subgroup_name, dpt_core const &s) {
+      h5::group grp = subgroup_name.empty() ? h5group : h5group.create_group(subgroup_name);
+      h5_write_attribute(grp, "Format", dpt_core::hdf5_format());
       //h5_write(grp, "", s.result_set());
       h5_write(grp, "constr_parameters", s.constr_parameters);
       h5_write(grp, "run_parameters", s.run_parameters);
@@ -132,9 +132,9 @@ namespace triqs_dualfermion {
 
     // Function that read all containers to hdf5 file
     CPP2PY_IGNORE
-    static dpt_core h5_read_construct(triqs::h5::group h5group, std::string subgroup_name) {
-      triqs::h5::group grp   = subgroup_name.empty() ? h5group : h5group.open_group(subgroup_name);
-      auto constr_parameters = triqs::h5::h5_read<constr_parameters_t>(grp, "constr_parameters");
+    static dpt_core h5_read_construct(h5::group h5group, std::string subgroup_name) {
+      h5::group grp   = subgroup_name.empty() ? h5group : h5group.open_group(subgroup_name);
+      auto constr_parameters = h5::h5_read<constr_parameters_t>(grp, "constr_parameters");
       auto s                 = dpt_core{constr_parameters};
       h5_read(grp, "run_parameters", s.run_parameters);
       h5_read(grp, "gimp_iw", s._gimp);
