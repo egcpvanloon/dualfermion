@@ -120,9 +120,16 @@ namespace triqs_dualfermion {
         
         if (output_stdout) std::cout<< "Initial Delta has been assigned" << std::endl;
         return;
-    }
+    }  
     
+    auto gloc  = G_iw_t{iwmesh,gf_struct} ;  
+    auto gdloc = G_iw_t{iwmesh,gf_struct} ;    
+    // First set to zero
+    gloc() = 0. ;
+    gdloc()= 0. ;
 
+    
+    if(params.calculate_sigma){
 
     // Create the container for the bare dual Green's function
     auto gd0 = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
@@ -130,19 +137,19 @@ namespace triqs_dualfermion {
     if (output_stdout) std::cout << "Initializing gd0" <<std::endl;    
     // Load the values of the bare dual Green's function                   
     for (auto const &b : range(gd0.size())) {
-      for (const auto &[iw,k] : gd0[b].mesh()){          
-          gd0[b][iw,k] = 1./ ( _gimp[b][iw] + _gimp[b][iw]*(_Delta[b][iw] - _Hk[b](k)   )*_gimp[b][iw]) - 1./_gimp[b][iw] ;          
-      }
+        for (const auto &iw : iwmesh ){  
+            for (const auto &k : kmesh ){  
+                gd0[b][iw,k] = 1./ ( _gimp[b][iw] + _gimp[b][iw]*(_Delta[b][iw] - _Hk[b](k)   )*_gimp[b][iw]) - 1./_gimp[b][iw] ;          
+            }
+        }
     }
+    if (output_stdout) std::cout << "Initialized gd0" <<std::endl;    
     if (output_gdk) h5_write(h5::file("gd_k.h5",'w'),"gd_k",gd0);
     
     
     /* Initialize empty Sigma_dual in momentum space */
     auto sigmad = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;
-
-    
-    if(params.calculate_sigma){
-
+        
     if (output_stdout) std::cout << "Calculating Sigma dual" << std::endl;
     
     /* FT gd0 to real space  */
@@ -271,34 +278,44 @@ namespace triqs_dualfermion {
     }
     }//sigma2    
     world.barrier(); // Necessary to avoid segfault on HLRN
-    sigmad_real() =  mpi::reduce(sigmad_real, world);
-    
-    //TODO:
-    // Perform the ''upfolding'' here? Or in python
-    
+    sigmad_real() =  mpi::all_reduce(sigmad_real, world);
+        
     if (output_stdout) std::cout << "Calculating Sigma dual: FT" << std::endl;
     sigmad = make_gf_from_fourier<1>(sigmad_real);
     if (output_gdr) h5_write(h5::file("gd_real.h5",'w'),"gd_real",gd_real);
     if (output_sigmadr) h5_write(h5::file("sigmad_real.h5",'w'),"sigmad_real",sigmad_real);
     if (output_sigmadk) h5_write(h5::file("sigmad_k.h5",'w'),"sigmad_k",sigmad);
-    }
-    else{
-      sigmad() = 0;            
-    }
     
-    /* Calculate G lattice and Gdlattice */
-    
-    if (output_stdout) std::cout << "Calculating Glat" << std::endl;
-    // Create the container for the lattice Green's function
-    auto glat = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
-    for (auto const &b : range(glat.size())) {
-        for (const auto &[iw,k] : glat[b].mesh()){
-            glat[b][iw,k] = 1./( 1./(_gimp[b][iw]+sigmad[b][iw,k]) + _Delta[b][iw] - _Hk[b](k)  );
-            gd0[b][iw,k]  = gd0[b][iw,k]/( 1.-sigmad[b][iw,k]*gd0[b][iw,k]);
+    /* Calculate local part of Gd and Gloc */
+    if (output_stdout) std::cout << "Calculate local parts" << std::endl;
+        
+    // Get local part
+    for (auto const &b : range(gd0.size())) {
+        for (const auto &iw : iwmesh ){  
+            for (const auto &k : kmesh ){  
+                gloc[b][iw]  += 1./( 1./(_gimp[b][iw]+sigmad[b][iw,k]) + _Delta[b][iw] - _Hk[b](k)  );
+                gdloc[b][iw] += gd0[b][iw,k]/( 1.-sigmad[b][iw,k]*gd0[b][iw,k]);
+            }
         }
     }
-    // Write the lattice Green's function
-    if (output_gk) h5_write(h5::file("G_k.h5",'w'),"G_k",glat);
+    
+    gloc() /= double(kmesh.size());
+    gdloc() /= double(kmesh.size());
+
+    // Calculate and Write the lattice Green's function
+    if (output_gk){ 
+        if (output_stdout) std::cout << "Calculating Glat" << std::endl;
+        // Create the container for the lattice Green's function
+        auto glat = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
+        for (auto const &b : range(glat.size())) {
+            for (const auto &iw : iwmesh ){  
+                for (const auto &k : kmesh ){  
+                    glat[b][iw,k] = 1./( 1./(_gimp[b][iw]+sigmad[b][iw,k]) + _Delta[b][iw] - _Hk[b](k)  );
+                }
+            }
+        }        
+        h5_write(h5::file("G_k.h5",'w'),"G_k",glat);
+    }
     
     // Also calculate sigma_lat here from Dyson's equation, since that is what we are frequently interested in
     // TODO: Some of the tests could be written purely in terms of sigma?
@@ -306,33 +323,36 @@ namespace triqs_dualfermion {
     if (output_sigmak){
         auto sigma_k = G_iw_k_t{{ iwmesh ,kmesh},gf_struct} ;  
         for (auto const &b : range(sigma_k.size())) {
-            for (const auto &[iw,k] : sigma_k[b].mesh()){
-                sigma_k[b][iw,k] = iw - _Hk[b](k)  -1./glat[b][iw,k];
+            for (const auto &iw : iwmesh ){  
+                for (const auto &k : kmesh ){  
+                    sigma_k[b][iw,k] = iw -( 1./(_gimp[b][iw]+sigmad[b][iw,k]) + _Delta[b][iw]  );
+                }
             }
         }
         h5_write(h5::file("sigma_k.h5",'w'),"sigma_k",sigma_k);
     }// output_sigmak
 
     
-    /* Calculate local part of Gd and Gloc */
-    auto gloc  = G_iw_t{iwmesh,gf_struct} ;  
-    auto gdloc = G_iw_t{iwmesh,gf_struct} ;
-    
-    // First set to zero
-    gloc() = 0. ;
-    gdloc()= 0. ;
-    
-    // Get local part
-    for (auto const &b : range(glat.size())) {
-        for (const auto &[iw,k] : glat[b].mesh()){            
-            gloc[b][iw]  += glat[b][iw,k];
-            gdloc[b][iw] += gd0[b][iw,k];
+    }//if calculate_sigma
+    else{
+        if (output_stdout) std::cout << "DMFT, no Sigma dual" << std::endl;
+                  
+        // Get local part
+        for (auto const &b : range(gloc.size())) {
+            for (const auto &iw : iwmesh ){  
+                for (const auto &k : kmesh ){  
+                    auto gd0 = 1./ ( _gimp[b][iw] + _gimp[b][iw]*(_Delta[b][iw] - _Hk[b](k))*_gimp[b][iw]) - 1./_gimp[b][iw] ;
+                    gloc[b][iw]  += 1./( 1./_gimp[b][iw] + _Delta[b][iw] - _Hk[b](k)  );
+                    gdloc[b][iw] += gd0;
+                }
+            }
         }
+        
+        gloc() /= double(kmesh.size());
+        gdloc() /= double(kmesh.size());
+      
     }
-    gloc() /= double(kmesh.size());
-    gdloc() /= double(kmesh.size());
-    
-    
+            
     /* Update formula        
        Delta_new = Delta_old + gimp^-1 Gd_loc Gloc^-1
        Now in terms of Gdd = 1/gimp * Gd * 1/gimp
