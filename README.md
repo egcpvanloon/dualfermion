@@ -7,7 +7,7 @@ This application calculates the first and second order dual fermion self-energy.
 Installation
 ------------
 
-* First get a working installation of TRIQS (v2.2.x)
+* First get a working installation of TRIQS (v3.0.x)
 * `git clone https://github.com/egcpvanloon/dualfermion.git dualfermion.src`
 * `mkdir -p dualfermion.build && cd dualfermion.build`
 * `cmake ../dualfermion.src`
