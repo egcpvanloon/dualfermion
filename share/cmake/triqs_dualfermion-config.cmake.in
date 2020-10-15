@@ -3,22 +3,26 @@
 # and reestablish the exported CMake Targets
 
 # Multiple inclusion guard
-if(NOT DUALFERMION_FOUND)
-set(DUALFERMION_FOUND True)
+if(NOT @PROJECT_NAME@_FOUND)
+set(@PROJECT_NAME@_FOUND TRUE)
+set_property(GLOBAL PROPERTY @PROJECT_NAME@_FOUND TRUE)
 
 # version
-set(DUALFERMION_VERSION @PROJECT_VERSION@)
-set(DUALFERMION_GIT_HASH @PROJECT_GIT_HASH@)
+set(@PROJECT_NAME@_VERSION @PROJECT_VERSION@ CACHE STRING "@PROJECT_NAME@ version")
+set(@PROJECT_NAME@_GIT_HASH @PROJECT_GIT_HASH@ CACHE STRING "@PROJECT_NAME@ git hash")
 
 # Root of the installation
-set(DUALFERMION_ROOT  @CMAKE_INSTALL_PREFIX@)
+set(@PROJECT_NAME@_ROOT @CMAKE_INSTALL_PREFIX@ CACHE STRING "@PROJECT_NAME@ root directory")
 
 # Include the exported targets of this project
-include(@CMAKE_INSTALL_PREFIX@/lib/cmake/dualfermion/dualfermion-targets.cmake)
+include(@CMAKE_INSTALL_PREFIX@/lib/cmake/@PROJECT_NAME@/@PROJECT_NAME@-targets.cmake)
 
-message(STATUS "Found dualfermion-config.cmake with version @PROJECT_VERSION@, hash = @PROJECT_GIT_HASH@")
+message(STATUS "Found @PROJECT_NAME@-config.cmake with version @PROJECT_VERSION@, hash = @PROJECT_GIT_HASH@, root = @CMAKE_INSTALL_PREFIX@")
 
 # Was the Project built with Documentation?
-set(DUALFERMION_WITH_DOCUMENTATION @Build_Documentation@)
+set(@PROJECT_NAME@_WITH_DOCUMENTATION @Build_Documentation@ CACHE BOOL "Was @PROJECT_NAME@ build with documentation?")
+
+# Was the Project built with PythonSupport?
+set(@PROJECT_NAME@_WITH_PYTHON_SUPPORT @PythonSupport@ CACHE BOOL "Was @PROJECT_NAME@ build with python support?")
 
 endif()

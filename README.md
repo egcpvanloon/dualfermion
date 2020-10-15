@@ -1,4 +1,4 @@
-# dualfermion - A dual fermion code based on triqs 
+[![build](https://github.com/egcpvanloon/dualfermion/workflows/build/badge.svg)](https://github.com/egcpvanloon/dualfermion/actions?query=workflow%3Abuild)
 
 This application calculates the first and second order dual fermion self-energy.
 

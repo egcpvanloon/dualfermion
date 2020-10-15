@@ -1,4 +1,4 @@
-file(GLOB_RECURSE sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
+file(GLOB_RECURSE sources *.cpp)
 add_library(${PROJECT_NAME}_c ${sources})
 add_library(${PROJECT_NAME}::${PROJECT_NAME}_c ALIAS ${PROJECT_NAME}_c)
 
@@ -10,9 +10,12 @@ set_property(TARGET ${PROJECT_NAME}_c PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(${PROJECT_NAME}_c PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/c++>)
 target_include_directories(${PROJECT_NAME}_c SYSTEM INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>)
 target_compile_definitions(${PROJECT_NAME}_c PUBLIC
-                                CTHYB_GIT_HASH=${PROJECT_GIT_HASH}
-                                TRIQS_GIT_HASH=${TRIQS_GIT_HASH}
-                          )
+				DUALFERMION_GIT_HASH=${PROJECT_GIT_HASH}
+				TRIQS_GIT_HASH=${TRIQS_GIT_HASH}
+				$<$<CONFIG:Debug>:DUALFERMION_DEBUG>
+				$<$<CONFIG:Debug>:TRIQS_DEBUG>
+				$<$<CONFIG:Debug>:TRIQS_ARRAYS_ENFORCE_BOUNDCHECK>
+			  )
 
 # Install library and headers
 install(TARGETS ${PROJECT_NAME}_c EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
@@ -39,14 +42,14 @@ if(ANALYZE_SOURCES)
   if(CPPCHECK_EXECUTABLE)
     message(STATUS "cppcheck found: ${CPPCHECK_EXECUTABLE}")
     add_custom_command(
-      TARGET ${PROJECT_NAME}_c
-        COMMAND ${CPPCHECK_EXECUTABLE}
-          --enable=warning,style,performance,portability
-          --std=c++17
-          --template=gcc
-          --verbose
-          --force
-          --quiet
+	TARGET ${PROJECT_NAME}_c
+	COMMAND ${CPPCHECK_EXECUTABLE}
+	  --enable=warning,style,performance,portability
+	  --std=c++17
+	  --template=gcc
+	  --verbose
+	  --force
+	  --quiet
           ${sources}
         WORKING_DIRECTORY
           ${CMAKE_CURRENT_SOURCE_DIR}

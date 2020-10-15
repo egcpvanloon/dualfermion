@@ -15,9 +15,9 @@ Prerequisites
 Installation steps
 ------------------
 
-#. Download the source code of the latest stable version by cloning the ``TRIQS/dualfermion`` repository from GitHub::
+#. Download the source code of the latest stable version by cloning the ``egcpvanloon/dualfermion`` repository from GitHub::
 
-     $ git clone https://github.com/TRIQS/dualfermion dualfermion.src
+     $ git clone https://github.com/egcpvanloon/dualfermion dualfermion.src
 
 #. Create and move to a new directory where you will compile the code::
 
@@ -58,7 +58,7 @@ Custom CMake options
 
 The compilation of ``dualfermion`` can be configured using CMake-options::
 
-    cmake ../dualfermion.src -DOPTION1=value1 -DOPTION2=value2 ... ../dualfermion.src
+    cmake ../dualfermion.src -DOPTION1=value1 -DOPTION2=value2 ...
 
 +-----------------------------------------------------------------+-----------------------------------------------+
 | Options                                                         | Syntax                                        |
