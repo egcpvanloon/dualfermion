@@ -89,4 +89,4 @@ jobs:
       run: |
         source $HOME/install/share/triqsvars.sh
         cd build
-        ctest -j2 --output-on-failure
+        ctest -j1 --output-on-failure
