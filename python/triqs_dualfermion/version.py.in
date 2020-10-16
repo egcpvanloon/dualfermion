@@ -21,10 +21,10 @@
 
 version = "@DUALFERMION_VERSION@"
 triqs_hash = "@TRIQS_GIT_HASH@"
-dualfermion_hash = "@DUALFERMION_GIT_HASH@"
+@PROJECT_NAME@_hash = "@PROJECT_GIT_HASH@"
 
 def show_version():
-  print( "\nYou are using the second-order dual fermion version %s, release %s\n"%(version, release))
+  print("\nYou are using @PROJECT_NAME@ version %s\n"%version)
 
 def show_git_hash():
-  print( "\nYou are using the second-order dual fermion solver git hash %s based on triqs git hash %s\n"%(dualfermion_hash, triqs_hash))
+  print("\nYou are using @PROJECT_NAME@ git hash %s based on triqs git hash %s\n"%("@PROJECT_GIT_HASH@", triqs_hash))
