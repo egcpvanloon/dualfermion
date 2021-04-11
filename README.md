@@ -13,4 +13,6 @@ Installation
 * `cmake ../dualfermion.src`
 * `make && make test && make install`
 
-
+Reference
+------------
+Erik G. C. P. van Loon, J. Phys.: Condens. Matter 33 135601 (2021)
